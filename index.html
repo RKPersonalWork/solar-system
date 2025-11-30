@@ -36,6 +36,11 @@
         @keyframes bounceIn { 0% { transform: scale(0); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         @media (max-width: 768px) { #info-panel { max-width: 90vw; font-size: 0.875rem; } .control-panel { font-size: 0.75rem; } }
         .eclipse-shadow { position: absolute; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, rgba(0,0,0,0.8), transparent); pointer-events: none; }
+        
+        /* Tooltip System */
+        .tooltip { position: absolute; background: rgba(0, 0, 0, 0.9); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; pointer-events: none; z-index: 10000; white-space: nowrap; opacity: 0; transition: opacity 0.2s ease; box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); border: 1px solid rgba(59, 130, 246, 0.5); }
+        .tooltip.show { opacity: 1; }
+        .tooltip::before { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid rgba(0, 0, 0, 0.9); }
     </style>
 </head>
 <body class="bg-black">
@@ -56,9 +61,21 @@
     </div>
 
     <div id="search-panel" class="absolute top-20 left-4 text-white search-panel p-4 rounded-lg max-w-xs z-10" style="display:none;">
-        <h3 class="text-lg font-bold mb-2 title">🔍 Search</h3>
-        <input type="text" id="search-input" placeholder="Search celestial objects..." class="w-full p-2 rounded bg-gray-800 text-white border border-blue-500 mb-2">
-        <div id="search-results" class="space-y-1 max-h-60 overflow-y-auto"></div>
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-bold title">🔍 Search Objects</h3>
+            <button onclick="toggleSearch()" class="text-white text-xl hover:text-red-400">&times;</button>
+        </div>
+        <input type="text" id="search-input" placeholder="Type planet or moon name..." class="w-full p-2 rounded bg-gray-800 text-white border border-blue-500 mb-3 focus:border-purple-400 focus:outline-none" autocomplete="off">
+        <div id="search-results" class="space-y-1 max-h-80 overflow-y-auto"></div>
+        <div id="search-help" class="text-xs text-gray-400 mt-3 border-t border-gray-700 pt-2">
+            <p class="mb-1">💡 Try searching for:</p>
+            <div class="grid grid-cols-2 gap-1">
+                <button onclick="searchFor('Earth')" class="text-left hover:text-blue-400">• Earth</button>
+                <button onclick="searchFor('Jupiter')" class="text-left hover:text-blue-400">• Jupiter</button>
+                <button onclick="searchFor('Titan')" class="text-left hover:text-blue-400">• Titan</button>
+                <button onclick="searchFor('Mars')" class="text-left hover:text-blue-400">• Mars</button>
+            </div>
+        </div>
     </div>
 
     <div id="comparison-view" class="comparison-view">
@@ -657,20 +674,60 @@
             document.getElementById('comparison-view').style.display = 'none';
         }
 
+        function searchFor(query) {
+            document.getElementById('search-input').value = query;
+            document.getElementById('search-input').dispatchEvent(new Event('input'));
+        }
+
         document.getElementById('search-input').addEventListener('input', e => {
             const query = e.target.value.toLowerCase();
             const results = document.getElementById('search-results');
             results.innerHTML = '';
+            
+            if (query.length === 0) {
+                results.innerHTML = '<p class="text-gray-500 text-xs p-2">Start typing to search...</p>';
+                return;
+            }
+            
             if (query.length < 2) return;
+            
+            let foundCount = 0;
+            
+            // Search planets and dwarf planets
             Object.keys(planetData).forEach(key => {
                 if (planetData[key].name.toLowerCase().includes(query)) {
                     const btn = document.createElement('button');
-                    btn.className = 'w-full text-left p-2 hover:bg-blue-900 rounded text-sm';
-                    btn.textContent = planetData[key].name;
-                    btn.addEventListener('click', () => { focusPlanet(key); toggleSearch(); });
+                    btn.className = 'w-full text-left p-2 hover:bg-blue-900 rounded text-sm border-l-2 border-blue-500';
+                    const icon = planetData[key].isDwarf ? '🪨' : key === 'sun' ? '⭐' : '🪐';
+                    btn.innerHTML = `${icon} <strong>${planetData[key].name}</strong> <span class="text-xs text-gray-400">- ${planetData[key].description.substring(0, 40)}...</span>`;
+                    btn.addEventListener('click', () => { focusPlanet(key); });
                     results.appendChild(btn);
+                    foundCount++;
                 }
             });
+            
+            // Search moons
+            Object.keys(moonData).forEach(planetKey => {
+                moonData[planetKey].forEach((moonInfo, idx) => {
+                    if (moonInfo.name.toLowerCase().includes(query)) {
+                        const btn = document.createElement('button');
+                        btn.className = 'w-full text-left p-2 hover:bg-purple-900 rounded text-sm border-l-2 border-purple-500 pl-4';
+                        btn.innerHTML = `🌙 <strong>${moonInfo.name}</strong> <span class="text-xs text-gray-400">- Moon of ${planetData[planetKey].name}</span>`;
+                        btn.addEventListener('click', () => { focusMoon(planetKey, idx); });
+                        results.appendChild(btn);
+                        foundCount++;
+                    }
+                });
+            });
+            
+            if (foundCount === 0) {
+                results.innerHTML = '<p class="text-gray-500 text-xs p-2">No results found. Try: Earth, Mars, Titan, Jupiter...</p>';
+            } else {
+                const summary = document.createElement('p');
+                summary.className = 'text-xs text-green-400 p-2 border-t border-gray-700 mt-2';
+                summary.textContent = `✓ Found ${foundCount} result${foundCount > 1 ? 's' : ''}`;
+                results.appendChild(summary);
+            }
         });
 
         function showEvent(text) {
@@ -828,6 +885,91 @@
         }, 1500);
 
         document.getElementById('total-objects').textContent = Object.keys(celestialBodies).length + asteroidCount + Object.values(moons).reduce((s, a) => s + a.length, 0);
+
+        // Tooltip System
+        function addTooltip(element, text) {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.textContent = text;
+            document.body.appendChild(tooltip);
+            
+            element.addEventListener('mouseenter', (e) => {
+                const rect = element.getBoundingClientRect();
+                tooltip.style.left = rect.left + (rect.width / 2) + 'px';
+                tooltip.style.top = (rect.top - 35) + 'px';
+                tooltip.style.transform = 'translateX(-50%)';
+                tooltip.classList.add('show');
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                tooltip.classList.remove('show');
+            });
+        }
+
+        // Add tooltips to all buttons after page load
+        setTimeout(() => {
+            // Planet buttons
+            Object.keys(planetData).forEach(key => {
+                const btn = document.getElementById(`btn-${key}`);
+                if (btn) addTooltip(btn, `Click to focus on ${planetData[key].name}. ${planetData[key].description}`);
+            });
+
+            // Camera views
+            const cameraButtons = document.querySelectorAll('.mb-4:nth-child(3) .toggle-btn');
+            const cameraTooltips = [
+                'Wide view of the entire solar system',
+                'Bird\'s eye view from above',
+                'Profile view from the side',
+                'Automated tour of all celestial bodies',
+                'Focus on inner solar system (Mercury to Mars)',
+                'Focus on outer solar system (Jupiter to Neptune)'
+            ];
+            cameraButtons.forEach((btn, idx) => {
+                if (cameraTooltips[idx]) addTooltip(btn, cameraTooltips[idx]);
+            });
+
+            // Display options
+            addTooltip(document.getElementById('toggle-orbits'), 'Show/hide orbital paths around the Sun');
+            addTooltip(document.getElementById('toggle-trails'), 'Show/hide planet movement trails');
+            addTooltip(document.getElementById('toggle-labels'), 'Show/hide planet name labels');
+            addTooltip(document.getElementById('toggle-moons'), 'Show/hide all moons orbiting planets');
+            addTooltip(document.getElementById('toggle-asteroids'), 'Show/hide 3500+ asteroids in the belt');
+            addTooltip(document.getElementById('toggle-dwarf'), 'Show/hide dwarf planets (Pluto & Ceres)');
+
+            // Advanced features
+            const advButtons = document.querySelectorAll('.mb-4:nth-child(5) .toggle-btn');
+            const advTooltips = [
+                'Highlight the green zone where liquid water can exist',
+                'Show special gravitational equilibrium points (L1-L5)',
+                'Display planets tilted at their actual angles',
+                'Detect and highlight solar/lunar eclipse events'
+            ];
+            advButtons.forEach((btn, idx) => {
+                if (advTooltips[idx]) addTooltip(btn, advTooltips[idx]);
+            });
+
+            // Utility buttons
+            const utilButtons = document.querySelectorAll('.space-y-2.text-xs .toggle-btn');
+            const utilTooltips = [
+                'Find any planet or moon quickly by name',
+                'Side-by-side comparison of all planets',
+                'Capture and download current view as image',
+                'Toggle sound effects on/off'
+            ];
+            utilButtons.forEach((btn, idx) => {
+                if (utilTooltips[idx]) addTooltip(btn, utilTooltips[idx]);
+            });
+
+            // Time jump buttons
+            const timeButtons = document.querySelectorAll('.grid.grid-cols-3 .toggle-btn');
+            const timeTooltips = ['-1 Year', '-1 Month', '-1 Day', '+1 Day', '+1 Month', '+1 Year'];
+            timeButtons.forEach((btn, idx) => {
+                if (timeTooltips[idx]) addTooltip(btn, `Jump time ${timeTooltips[idx]}`);
+            });
+
+            // Speed slider
+            addTooltip(document.getElementById('speed-slider'), 'Control simulation speed from -50x (reverse) to +100x (fast forward)');
+        }, 2000);
 
         animate();
     </script>
