@@ -8,6 +8,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Space Mono', monospace; touch-action: none; }
+        
+        /* Custom Scrollbar Styling */
+        ::-webkit-scrollbar { width: 12px; height: 12px; }
+        ::-webkit-scrollbar-track { background: linear-gradient(180deg, rgba(10, 10, 30, 0.8) 0%, rgba(20, 20, 50, 0.8) 100%); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(59, 130, 246, 0.8) 0%, rgba(139, 92, 246, 0.8) 100%); border-radius: 10px; border: 2px solid rgba(10, 10, 30, 0.5); }
+        ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(59, 130, 246, 1) 0%, rgba(139, 92, 246, 1) 100%); box-shadow: 0 0 10px rgba(59, 130, 246, 0.8); }
+        ::-webkit-scrollbar-corner { background: rgba(10, 10, 30, 0.8); }
+        
+        /* Firefox Scrollbar */
+        * { scrollbar-width: thin; scrollbar-color: rgba(59, 130, 246, 0.8) rgba(10, 10, 30, 0.8); }
+        
         #info-panel { background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(20, 20, 40, 0.9) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(100, 150, 255, 0.4); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); max-height: 90vh; overflow-y: auto; }
         .planet-button { transition: all 0.3s ease; border-left: 3px solid transparent; }
         .planet-button:hover { transform: scale(1.05) translateX(5px); background: rgba(59, 130, 246, 0.3); border-left-color: #60a5fa; }
