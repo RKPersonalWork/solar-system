@@ -569,18 +569,49 @@
         function toggleMoons() { showMoons = !showMoons; Object.values(moons).forEach(ma => ma.forEach(m => m.mesh.visible = showMoons)); if (issGroup) issGroup.visible = showMoons; document.getElementById('toggle-moons').classList.toggle('active', showMoons); }
         function toggleAsteroids() { showAsteroids = !showAsteroids; asteroidBelt.visible = showAsteroids; document.getElementById('toggle-asteroids').classList.toggle('active', showAsteroids); }
         function toggleDwarfPlanets() { showDwarfPlanets = !showDwarfPlanets; ['pluto', 'ceres'].forEach(k => { if (celestialBodies[k]) celestialBodies[k].mesh.visible = showDwarfPlanets; }); document.getElementById('toggle-dwarf').classList.toggle('active', showDwarfPlanets); }
-        function toggleHabitableZone() { showHabitableZone = !showHabitableZone; habitableZoneInner.visible = habitableZoneOuter.visible = showHabitableZone; }
-        function toggleLagrangePoints() { showLagrangePoints = !showLagrangePoints; lagrangePoints.forEach(p => p.visible = showLagrangePoints); }
-        function toggleDayNight() { showDayNight = !showDayNight; }
+        function toggleHabitableZone() { 
+            showHabitableZone = !showHabitableZone; 
+            habitableZoneInner.visible = habitableZoneOuter.visible = showHabitableZone; 
+            const btn = document.querySelector('button[onclick="toggleHabitableZone()"]');
+            if (btn) btn.classList.toggle('active', showHabitableZone);
+        }
+        function toggleLagrangePoints() { 
+            showLagrangePoints = !showLagrangePoints; 
+            lagrangePoints.forEach(p => p.visible = showLagrangePoints); 
+            const btn = document.querySelector('button[onclick="toggleLagrangePoints()"]');
+            if (btn) btn.classList.toggle('active', showLagrangePoints);
+        }
+        function toggleDayNight() { 
+            showDayNight = !showDayNight; 
+            const btn = document.querySelector('button[onclick="toggleDayNight()"]');
+            if (btn) btn.classList.toggle('active', showDayNight);
+        }
         function toggleAxialTilt() { 
             showAxialTilt = !showAxialTilt; 
             Object.keys(celestialBodies).forEach(k => {
                 if (k !== 'sun') celestialBodies[k].mesh.rotation.z = showAxialTilt ? (celestialBodies[k].data.tilt || 0) * Math.PI / 180 : 0;
             });
+            const btn = document.querySelector('button[onclick="toggleAxialTilt()"]');
+            if (btn) btn.classList.toggle('active', showAxialTilt);
         }
-        function toggleMiniMap() { showMiniMap = !showMiniMap; document.getElementById('mini-map').style.display = showMiniMap ? 'block' : 'none'; }
-        function toggleCalculator() { const panel = document.getElementById('calculator-panel'); panel.style.display = panel.style.display === 'none' ? 'block' : 'none'; }
-        function playSound() { soundEnabled = !soundEnabled; document.getElementById('sound-btn').textContent = soundEnabled ? '🔊 Sound ON' : '🔇 Sound OFF'; }
+        function toggleMiniMap() { 
+            showMiniMap = !showMiniMap; 
+            document.getElementById('mini-map').style.display = showMiniMap ? 'block' : 'none'; 
+            const btn = document.querySelector('button[onclick="toggleMiniMap()"]');
+            if (btn) btn.classList.toggle('active', showMiniMap);
+        }
+        function toggleCalculator() { 
+            const panel = document.getElementById('calculator-panel'); 
+            const isVisible = panel.style.display !== 'none';
+            panel.style.display = isVisible ? 'none' : 'block'; 
+            const btn = document.querySelector('button[onclick="toggleCalculator()"]');
+            if (btn) btn.classList.toggle('active', !isVisible);
+        }
+        function playSound() { 
+            soundEnabled = !soundEnabled; 
+            document.getElementById('sound-btn').textContent = soundEnabled ? '🔊 Sound ON' : '🔇 Sound OFF'; 
+            document.getElementById('sound-btn').classList.toggle('active', soundEnabled);
+        }
         function takeScreenshot() { renderer.render(scene, camera); const link = document.createElement('a'); link.download = 'solar-system.png'; link.href = renderer.domElement.toDataURL('image/png'); link.click(); }
 
         let animationSpeed = 1, time = 0, frameCount = 0, lastTime = performance.now();
