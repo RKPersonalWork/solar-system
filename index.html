@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Ultimate Solar System Explorer - Ultimate Experience Edition</title>
+    <title>Ultimate Solar System Explorer - Complete Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
     <style>
@@ -37,17 +37,30 @@
         @media (max-width: 768px) { #info-panel { max-width: 90vw; font-size: 0.875rem; } .control-panel { font-size: 0.75rem; } }
         .eclipse-shadow { position: absolute; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, rgba(0,0,0,0.8), transparent); pointer-events: none; }
         
-        /* Tooltip System */
-        .tooltip { position: absolute; background: rgba(0, 0, 0, 0.9); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; pointer-events: none; z-index: 10000; white-space: nowrap; opacity: 0; transition: opacity 0.2s ease; box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); border: 1px solid rgba(59, 130, 246, 0.5); }
+        .tooltip { position: absolute; background: rgba(0, 0, 0, 0.9); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; pointer-events: none; z-index: 10000; white-space: nowrap; opacity: 0; transition: opacity 0.2s ease; box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); border: 1px solid rgba(59, 130, 246, 0.5); max-width: 250px; white-space: normal; }
         .tooltip.show { opacity: 1; }
         .tooltip::before { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid rgba(0, 0, 0, 0.9); }
+        .tooltip.below::before { bottom: auto; top: -6px; border-top: none; border-bottom: 6px solid rgba(0, 0, 0, 0.9); }
+        
+        .calculator-panel { background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(20, 20, 40, 0.95) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(100, 150, 255, 0.4); }
+        
+        /* Mission Planning Mode */
+        .mission-panel { background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(20, 20, 40, 0.95) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(255, 100, 150, 0.4); }
+        .mission-trajectory { stroke-dasharray: 5, 5; animation: dash 20s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -1000; } }
+        .transfer-orbit { stroke: #ff6b6b; stroke-width: 2; fill: none; opacity: 0.7; }
+        .gravity-assist-arrow { fill: #ffd93d; opacity: 0.8; }
     </style>
 </head>
 <body class="bg-black">
     <div id="loading-screen">
         <div class="loading-spinner mb-4"></div>
         <h2 class="text-white text-2xl font-bold title">Loading Ultimate Solar System...</h2>
-        <p class="text-blue-300 text-sm mt-2">Initializing Universe... </p>
+        <p class="text-blue-300 text-sm mt-2">Initializing 3,531+ Objects...</p>
+        <div class="w-64 h-2 bg-gray-800 rounded-full mt-4 overflow-hidden">
+            <div id="loading-bar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <p class="text-gray-400 text-xs mt-2" id="loading-text">Loading stars...</p>
     </div>
 
     <div id="event-notification" class="event-notification">
@@ -73,7 +86,7 @@
                 <button onclick="searchFor('Earth')" class="text-left hover:text-blue-400">• Earth</button>
                 <button onclick="searchFor('Jupiter')" class="text-left hover:text-blue-400">• Jupiter</button>
                 <button onclick="searchFor('Titan')" class="text-left hover:text-blue-400">• Titan</button>
-                <button onclick="searchFor('Mars')" class="text-left hover:text-blue-400">• Mars</button>
+                <button onclick="searchFor('Halley')" class="text-left hover:text-blue-400">• Halley</button>
             </div>
         </div>
     </div>
@@ -84,6 +97,82 @@
             <button onclick="closeComparison()" class="text-white text-2xl hover:text-red-400">&times;</button>
         </div>
         <div id="comparison-content" class="text-white"></div>
+    </div>
+
+    <div id="calculator-panel" class="absolute top-20 right-4 text-white calculator-panel p-4 rounded-lg max-w-xs z-10" style="display:none;">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-bold title">🧮 Science Calculator</h3>
+            <button onclick="toggleCalculator()" class="text-white text-xl hover:text-red-400">&times;</button>
+        </div>
+        <div class="space-y-3">
+            <div>
+                <label class="text-xs text-gray-400">Your Weight (kg):</label>
+                <input type="number" id="user-weight" value="70" class="w-full p-2 rounded bg-gray-800 text-white border border-blue-500 focus:outline-none" min="1" max="500">
+            </div>
+            <div id="calc-results" class="text-xs space-y-2 border-t border-gray-700 pt-2">
+                <p class="text-gray-400">Select a planet to see calculations...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="mission-panel" class="absolute bottom-20 right-4 text-white mission-panel p-4 rounded-lg max-w-md z-10" style="display:none;">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-bold title">🚀 Mission Planning</h3>
+            <button onclick="toggleMissionPlanner()" class="text-white text-xl hover:text-red-400">&times;</button>
+        </div>
+        <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                    <label class="text-gray-400">From:</label>
+                    <select id="mission-from" class="w-full p-2 rounded bg-gray-800 text-white border border-pink-500 focus:outline-none">
+                        <option value="earth">Earth</option>
+                        <option value="mars">Mars</option>
+                        <option value="venus">Venus</option>
+                        <option value="mercury">Mercury</option>
+                        <option value="jupiter">Jupiter</option>
+                        <option value="saturn">Saturn</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-gray-400">To:</label>
+                    <select id="mission-to" class="w-full p-2 rounded bg-gray-800 text-white border border-pink-500 focus:outline-none">
+                        <option value="mars">Mars</option>
+                        <option value="jupiter">Jupiter</option>
+                        <option value="saturn">Saturn</option>
+                        <option value="venus">Venus</option>
+                        <option value="mercury">Mercury</option>
+                        <option value="earth">Earth</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div>
+                <label class="text-xs text-gray-400">Spacecraft Mass (kg):</label>
+                <input type="number" id="spacecraft-mass" value="1000" class="w-full p-2 rounded bg-gray-800 text-white border border-pink-500 focus:outline-none" min="100" max="100000">
+            </div>
+
+            <button onclick="calculateMission()" class="w-full toggle-btn text-sm bg-pink-600 hover:bg-pink-700">🎯 Calculate Transfer</button>
+            
+            <div id="mission-results" class="text-xs space-y-2 border-t border-pink-700 pt-2 mt-3">
+                <p class="text-gray-400">Configure your mission above...</p>
+            </div>
+
+            <div class="border-t border-pink-700 pt-2 mt-2">
+                <p class="text-xs font-semibold text-pink-300 mb-2">🎮 Gravity Assist Options:</p>
+                <div class="space-y-1">
+                    <label class="flex items-center text-xs">
+                        <input type="checkbox" id="assist-venus" class="mr-2">
+                        <span>Use Venus flyby</span>
+                    </label>
+                    <label class="flex items-center text-xs">
+                        <input type="checkbox" id="assist-jupiter" class="mr-2">
+                        <span>Use Jupiter flyby</span>
+                    </label>
+                </div>
+            </div>
+
+            <button onclick="visualizeMission()" class="w-full toggle-btn text-sm mt-2">👁️ Visualize Trajectory</button>
+        </div>
     </div>
 
     <div id="info-panel" class="absolute top-4 left-4 text-white p-6 rounded-lg max-w-sm z-10">
@@ -129,8 +218,9 @@
             <p class="font-semibold mb-1">🏆 Achievements: <span id="achievement-count">0/10</span></p>
             <p class="font-semibold mb-1">Quick Stats:</p>
             <p>📊 Total Objects: <span id="total-objects">-</span></p>
-            <p>🌍 Planets: 8 | 🌙 Moons: 16</p>
-            <p>☄️ Asteroids: 3500 | 🪐 Dwarf: 2</p>
+            <p>🌍 Planets: 8 | 🌙 Moons: 146+</p>
+            <p>☄️ Asteroids: 3500 | 🪐 Dwarf: 5</p>
+            <p>🚀 Missions: 3 | ☄️ Comets: 1</p>
             <p>🎯 FPS: <span id="fps-counter">60</span></p>
         </div>
     </div>
@@ -194,6 +284,8 @@
         <div class="space-y-2 text-xs">
             <button onclick="toggleSearch()" class="toggle-btn w-full">🔍 Search</button>
             <button onclick="showComparison()" class="toggle-btn w-full">📊 Compare</button>
+            <button onclick="toggleCalculator()" class="toggle-btn w-full">🧮 Calculator</button>
+            <button onclick="toggleMissionPlanner()" class="toggle-btn w-full">🚀 Mission Plan</button>
             <button onclick="takeScreenshot()" class="toggle-btn w-full">📸 Screenshot</button>
             <button onclick="playSound()" class="toggle-btn w-full" id="sound-btn">🔇 Sound OFF</button>
         </div>
@@ -210,6 +302,20 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
+        // Loading progress simulation
+        let loadProgress = 0;
+        const loadInterval = setInterval(() => {
+            loadProgress += Math.random() * 15;
+            if (loadProgress >= 100) {
+                loadProgress = 100;
+                clearInterval(loadInterval);
+            }
+            document.getElementById('loading-bar').style.width = loadProgress + '%';
+            const stages = ['Loading stars...', 'Creating planets...', 'Adding moons...', 'Populating asteroid belt...', 'Initializing missions...', 'Almost ready...'];
+            const stage = Math.floor(loadProgress / 100 * stages.length);
+            document.getElementById('loading-text').textContent = stages[Math.min(stage, stages.length - 1)];
+        }, 200);
+
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x000000, 0.00015);
         
@@ -230,6 +336,8 @@
         let startDate = new Date(2024, 0, 1, 0, 0, 0);
         let achievements = new Set();
         let audioContext = null;
+        let visitedPlanets = new Set();
+        let startTime = Date.now();
 
         const ambientLight = new THREE.AmbientLight(0x222222, 0.5);
         scene.add(ambientLight);
@@ -292,23 +400,53 @@
             ceres: { name: 'Ceres', radius: 0.6, color: 0x8b8680, distance: 125, speed: 0.0035, tilt: 4, rotationSpeed: 0.02,
                 description: 'Largest asteroid belt object.', stats: { diameter: '940 km', location: 'Asteroid Belt', moons: '0' },
                 funFact: 'Contains 1/3 of asteroid belt mass!', mythology: 'Roman goddess of agriculture.',
-                discovery: 'Discovered by Giuseppe Piazzi in 1801', escapeVelocity: 0.5, gravity: 0.3, isDwarf: true, orbitalPeriod: 1680 }
+                discovery: 'Discovered by Giuseppe Piazzi in 1801', escapeVelocity: 0.5, gravity: 0.3, isDwarf: true, orbitalPeriod: 1680 },
+            eris: { name: 'Eris', radius: 1.2, color: 0xcccccc, distance: 350, speed: 0.00002, tilt: 44, rotationSpeed: 0.005,
+                description: 'Most massive dwarf planet beyond Neptune.', stats: { diameter: '2,326 km', type: 'Dwarf Planet', moons: '1 (Dysnomia)' },
+                funFact: 'Eris caused Pluto\'s demotion to dwarf planet!', mythology: 'Greek goddess of strife and discord.',
+                discovery: 'Discovered by Mike Brown in 2005', escapeVelocity: 1.4, gravity: 0.8, isDwarf: true, orbitalPeriod: 203830 },
+            makemake: { name: 'Makemake', radius: 0.75, color: 0xd4a574, distance: 330, speed: 0.000025, tilt: 28.96, rotationSpeed: 0.006,
+                description: 'Third largest dwarf planet in Kuiper Belt.', stats: { diameter: '1,430 km', type: 'Dwarf Planet', moons: '1' },
+                funFact: 'Named after Rapa Nui creation deity!', mythology: 'Rapa Nui (Easter Island) creator god.',
+                discovery: 'Discovered by Mike Brown in 2005', escapeVelocity: 0.8, gravity: 0.5, isDwarf: true, orbitalPeriod: 111845 },
+            haumea: { name: 'Haumea', radius: 1.0, color: 0xffeeee, distance: 320, speed: 0.000028, tilt: 28, rotationSpeed: 0.3,
+                description: 'Elongated dwarf planet spinning rapidly.', stats: { diameter: '1,632 km', type: 'Dwarf Planet', shape: 'Ellipsoid', moons: '2' },
+                funFact: 'Fastest rotating large object in solar system!', mythology: 'Hawaiian goddess of childbirth.',
+                discovery: 'Discovered by Mike Brown in 2004', escapeVelocity: 0.84, gravity: 0.44, isDwarf: true, orbitalPeriod: 103410 }
         };
 
         const moonData = {
             earth: [{ name: 'Moon', distance: 10, radius: 1.7, speed: 0.08, color: 0xcccccc }],
-            mars: [{ name: 'Phobos', distance: 6, radius: 0.5, speed: 0.15, color: 0x999999 }, { name: 'Deimos', distance: 8, radius: 0.4, speed: 0.1, color: 0xaaaaaa }],
-            jupiter: [{ name: 'Io', distance: 18, radius: 1.8, speed: 0.1, color: 0xffcc00 }, { name: 'Europa', distance: 24, radius: 1.6, speed: 0.08, color: 0xddddff }, 
-                      { name: 'Ganymede', distance: 30, radius: 2.6, speed: 0.06, color: 0x998877 }, { name: 'Callisto', distance: 36, radius: 2.4, speed: 0.04, color: 0x776655 }],
-            saturn: [{ name: 'Titan', distance: 26, radius: 2.6, speed: 0.05, color: 0xffaa66 }, { name: 'Rhea', distance: 20, radius: 0.8, speed: 0.07, color: 0xcccccc },
-                     { name: 'Enceladus', distance: 16, radius: 0.6, speed: 0.09, color: 0xffffff }],
-            uranus: [{ name: 'Titania', distance: 12, radius: 0.8, speed: 0.09, color: 0xaaccdd }, { name: 'Oberon', distance: 15, radius: 0.7, speed: 0.07, color: 0x99bbcc }],
-            neptune: [{ name: 'Triton', distance: 14, radius: 1.4, speed: 0.07, color: 0xbbccff }],
-            pluto: [{ name: 'Charon', distance: 8, radius: 0.6, speed: 0.1, color: 0xaaaaaa }]
+            mars: [
+                { name: 'Phobos', distance: 6, radius: 0.5, speed: 0.15, color: 0x999999 }, 
+                { name: 'Deimos', distance: 8, radius: 0.4, speed: 0.1, color: 0xaaaaaa }
+            ],
+            jupiter: [
+                { name: 'Io', distance: 18, radius: 1.8, speed: 0.1, color: 0xffcc00 }, 
+                { name: 'Europa', distance: 24, radius: 1.6, speed: 0.08, color: 0xddddff }, 
+                { name: 'Ganymede', distance: 30, radius: 2.6, speed: 0.06, color: 0x998877 }, 
+                { name: 'Callisto', distance: 36, radius: 2.4, speed: 0.04, color: 0x776655 }
+            ],
+            saturn: [
+                { name: 'Titan', distance: 26, radius: 2.6, speed: 0.05, color: 0xffaa66 }, 
+                { name: 'Rhea', distance: 20, radius: 0.8, speed: 0.07, color: 0xcccccc },
+                { name: 'Enceladus', distance: 16, radius: 0.6, speed: 0.09, color: 0xffffff }
+            ],
+            uranus: [
+                { name: 'Titania', distance: 12, radius: 0.8, speed: 0.09, color: 0xaaccdd }, 
+                { name: 'Oberon', distance: 15, radius: 0.7, speed: 0.07, color: 0x99bbcc }
+            ],
+            neptune: [
+                { name: 'Triton', distance: 14, radius: 1.4, speed: 0.07, color: 0xbbccff }
+            ],
+            pluto: [
+                { name: 'Charon', distance: 8, radius: 0.6, speed: 0.1, color: 0xaaaaaa }
+            ]
         };
 
         const celestialBodies = {}, orbits = {}, planetTrails = {}, labels = {}, moons = {};
         let issGroup = null, cometAngle = 0, issAngle = 0;
+        let spaceProbes = [];
 
         function createPlanetTexture(type) {
             const canvas = document.createElement('canvas');
@@ -337,20 +475,25 @@
                 ctx.beginPath(); ctx.arc(512, 100, 60, 0, Math.PI * 2); ctx.fill();
                 ctx.beginPath(); ctx.arc(512, 412, 60, 0, Math.PI * 2); ctx.fill();
             } else {
-                const colors = { mercury: '#8C7853', venus: '#ffc649', mars: '#cd5c5c', jupiter: '#d4a574', saturn: '#e5c287', uranus: '#4fd0e7', neptune: '#4166f5', pluto: '#c9a687', ceres: '#8b8680' };
+                const colors = { 
+                    mercury: '#8C7853', venus: '#ffc649', mars: '#cd5c5c', jupiter: '#d4a574', 
+                    saturn: '#e5c287', uranus: '#4fd0e7', neptune: '#4166f5', pluto: '#c9a687', 
+                    ceres: '#8b8680', eris: '#cccccc', makemake: '#d4a574', haumea: '#ffeeee'
+                };
                 ctx.fillStyle = colors[type] || '#888'; ctx.fillRect(0, 0, 1024, 512);
             }
             return new THREE.CanvasTexture(canvas);
         }
 
+        // Enhanced Sun with larger lens flare
         const sunGeo = new THREE.SphereGeometry(planetData.sun.radius, 64, 64);
         const sun = new THREE.Mesh(sunGeo, new THREE.MeshBasicMaterial({ map: createPlanetTexture('sun'), color: 0xfdb813 }));
         scene.add(sun);
         celestialBodies.sun = { mesh: sun, data: planetData.sun, angle: 0 };
 
-        for (let i = 0; i < 4; i++) {
-            const glow = new THREE.Mesh(new THREE.SphereGeometry(planetData.sun.radius * (1.1 + i * 0.12), 32, 32),
-                new THREE.MeshBasicMaterial({ color: 0xfdb813, transparent: true, opacity: 0.08 / (i + 1), side: THREE.BackSide }));
+        for (let i = 0; i < 6; i++) {
+            const glow = new THREE.Mesh(new THREE.SphereGeometry(planetData.sun.radius * (1.1 + i * 0.15), 32, 32),
+                new THREE.MeshBasicMaterial({ color: i < 3 ? 0xfdb813 : 0xffffff, transparent: true, opacity: 0.1 / (i + 1), side: THREE.BackSide }));
             sun.add(glow);
         }
 
@@ -366,12 +509,38 @@
             asteroids.push({ mesh: asteroid, angle, distance, speed: 0.003 + Math.random() * 0.002, rotSpeed: { x: (Math.random() - 0.5) * 0.02, y: (Math.random() - 0.5) * 0.02 } });
         }
 
+        // Halley's Comet with 76-year elliptical orbit
         const cometGroup = new THREE.Group();
         cometGroup.add(new THREE.Mesh(new THREE.SphereGeometry(1.8, 16, 16), new THREE.MeshStandardMaterial({ color: 0x88CCFF, emissive: 0x4488FF, emissiveIntensity: 0.6 })));
         const tail = new THREE.Mesh(new THREE.ConeGeometry(4, 50, 8), new THREE.MeshBasicMaterial({ color: 0x88CCFF, transparent: true, opacity: 0.5 }));
         tail.rotation.x = Math.PI / 2; tail.position.z = -25;
         cometGroup.add(tail);
         scene.add(cometGroup);
+
+        // Space Missions
+        const voyager1 = new THREE.Mesh(
+            new THREE.BoxGeometry(1, 1, 2),
+            new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8 })
+        );
+        scene.add(voyager1);
+        
+        const newHorizons = new THREE.Mesh(
+            new THREE.ConeGeometry(0.8, 2, 8),
+            new THREE.MeshStandardMaterial({ color: 0x4488ff, metalness: 0.7 })
+        );
+        scene.add(newHorizons);
+        
+        const parkerProbe = new THREE.Mesh(
+            new THREE.OctahedronGeometry(0.8),
+            new THREE.MeshStandardMaterial({ color: 0xff4444, metalness: 0.9, emissive: 0xff4444, emissiveIntensity: 0.3 })
+        );
+        scene.add(parkerProbe);
+
+        spaceProbes = [
+            { mesh: voyager1, name: 'Voyager 1', angle: 0, distance: 500, speed: 0.0001 },
+            { mesh: newHorizons, name: 'New Horizons', angle: Math.PI, distance: 300, speed: 0.00005, target: 'pluto' },
+            { mesh: parkerProbe, name: 'Parker Solar Probe', angle: 0, distance: 25, speed: 0.05, solar: true }
+        ];
 
         let habitableZoneInner, habitableZoneOuter, lagrangePoints = [];
         habitableZoneInner = new THREE.Mesh(new THREE.RingGeometry(75, 76, 128), new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide, transparent: true, opacity: 0.3 }));
@@ -430,6 +599,47 @@
                 const atm = new THREE.Mesh(new THREE.SphereGeometry(data.radius * 1.06, 64, 64), new THREE.MeshPhongMaterial({ color: '#87CEEB', transparent: true, opacity: 0.18, side: THREE.BackSide }));
                 planet.add(atm);
 
+                // City lights on night side
+                const lightsCanvas = document.createElement('canvas');
+                lightsCanvas.width = 1024; lightsCanvas.height = 512;
+                const lctx2 = lightsCanvas.getContext('2d');
+                lctx2.fillStyle = 'black'; lctx2.fillRect(0, 0, 1024, 512);
+                lctx2.fillStyle = '#ffff99';
+                for (let i = 0; i < 500; i++) {
+                    lctx2.fillRect(Math.random() * 1024, Math.random() * 512, 2, 2);
+                }
+                const cityLights = new THREE.Mesh(
+                    new THREE.SphereGeometry(data.radius * 1.01, 64, 64),
+                    new THREE.MeshBasicMaterial({ 
+                        map: new THREE.CanvasTexture(lightsCanvas), 
+                        transparent: true, 
+                        opacity: 0.4, 
+                        blending: THREE.AdditiveBlending 
+                    })
+                );
+                planet.add(cityLights);
+
+                // Animated clouds
+                const cloudsCanvas = document.createElement('canvas');
+                cloudsCanvas.width = 1024; cloudsCanvas.height = 512;
+                const cctx = cloudsCanvas.getContext('2d');
+                cctx.fillStyle = 'rgba(255,255,255,0.5)';
+                for (let i = 0; i < 150; i++) {
+                    cctx.beginPath();
+                    cctx.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 50 + 20, 0, Math.PI * 2);
+                    cctx.fill();
+                }
+                const clouds = new THREE.Mesh(
+                    new THREE.SphereGeometry(data.radius * 1.02, 64, 64),
+                    new THREE.MeshPhongMaterial({ 
+                        map: new THREE.CanvasTexture(cloudsCanvas), 
+                        transparent: true, 
+                        opacity: 0.3 
+                    })
+                );
+                planet.add(clouds);
+                planet.userData.clouds = clouds;
+
                 issGroup = new THREE.Group();
                 issGroup.add(new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.3, 0.5), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8 })));
                 const sp = new THREE.Mesh(new THREE.BoxGeometry(2, 0.05, 0.6), new THREE.MeshStandardMaterial({ color: 0x1a3a5a }));
@@ -460,6 +670,39 @@
         camera.lookAt(0, 0, 0);
 
         let isDragging = false, previousMouse = { x: 0, y: 0 }, cameraRotation = { x: 0.5, y: 0.5 }, cameraDistance = 350, targetPlanet = null;
+
+        // Touch controls
+        let touchStartDistance = 0;
+        renderer.domElement.addEventListener('touchstart', e => {
+            if (e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                touchStartDistance = Math.sqrt(dx * dx + dy * dy);
+            } else if (e.touches.length === 1) {
+                isDragging = true;
+                previousMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+        });
+
+        renderer.domElement.addEventListener('touchmove', e => {
+            e.preventDefault();
+            if (e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const delta = touchStartDistance - distance;
+                cameraDistance += delta * 0.5;
+                cameraDistance = Math.max(30, Math.min(2000, cameraDistance));
+                touchStartDistance = distance;
+            } else if (e.touches.length === 1 && isDragging) {
+                cameraRotation.y += (e.touches[0].clientX - previousMouse.x) * 0.005;
+                cameraRotation.x += (e.touches[0].clientY - previousMouse.y) * 0.005;
+                cameraRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraRotation.x));
+                previousMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+        });
+
+        renderer.domElement.addEventListener('touchend', () => { isDragging = false; });
 
         renderer.domElement.addEventListener('mousedown', e => { isDragging = true; previousMouse = { x: e.clientX, y: e.clientY }; });
         renderer.domElement.addEventListener('mousemove', e => {
@@ -492,6 +735,14 @@
         function focusPlanet(key) {
             targetPlanet = key;
             const data = celestialBodies[key].data;
+            
+            if (key !== 'sun') {
+                visitedPlanets.add(key);
+                if (visitedPlanets.size >= 8 && !['pluto', 'ceres', 'eris', 'makemake', 'haumea'].includes(key)) {
+                    checkAchievement('astronomer');
+                }
+            }
+            
             document.getElementById('planet-name').textContent = data.name;
             document.getElementById('planet-description').textContent = data.description;
             const statsDiv = document.getElementById('planet-stats');
@@ -510,7 +761,8 @@
             if (data.discovery) document.getElementById('discovery-text').textContent = data.discovery;
             
             document.querySelectorAll('.planet-button').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`btn-${key}`).classList.add('active');
+            const btn = document.getElementById(`btn-${key}`);
+            if (btn) btn.classList.add('active');
             
             const moonContainer = document.getElementById('moon-buttons-container');
             const moonButtonsDiv = document.getElementById('moon-buttons');
@@ -535,6 +787,7 @@
                 moonContainer.style.display = 'none';
             }
             
+            updateCalculator(data);
             checkAchievement('first_click');
             if (key !== 'sun') checkAchievement('explorer');
         }
@@ -570,12 +823,39 @@
             checkAchievement('moon_hunter');
         }
 
+        function updateCalculator(planetData) {
+            const weight = parseFloat(document.getElementById('user-weight').value) || 70;
+            const resultsDiv = document.getElementById('calc-results');
+            
+            if (!planetData.gravity) {
+                resultsDiv.innerHTML = '<p class="text-gray-400 text-xs">No gravity data available</p>';
+                return;
+            }
+            
+            const weightOnPlanet = (weight * planetData.gravity / 9.8).toFixed(1);
+            const lightTime = (planetData.distance * 1.5 / 299792).toFixed(2); // distance in million km / speed of light
+            
+            resultsDiv.innerHTML = `
+                <p class="text-green-400"><strong>Your weight:</strong> ${weightOnPlanet} kg</p>
+                <p class="text-blue-400"><strong>Escape velocity:</strong> ${planetData.escapeVelocity} km/s</p>
+                <p class="text-yellow-400"><strong>Light travel time:</strong> ${lightTime} s</p>
+                <p class="text-purple-400"><strong>Surface gravity:</strong> ${planetData.gravity} m/s²</p>
+            `;
+        }
+
+        document.getElementById('user-weight').addEventListener('input', () => {
+            if (targetPlanet && celestialBodies[targetPlanet]) {
+                updateCalculator(celestialBodies[targetPlanet].data);
+            }
+        });
+
         const buttonsContainer = document.getElementById('planet-buttons');
         Object.keys(planetData).forEach(key => {
             const btn = document.createElement('button');
             btn.id = `btn-${key}`;
             btn.className = 'planet-button w-full text-left px-3 py-2 rounded text-sm';
-            btn.textContent = `${planetData[key].isDwarf ? '🪨' : key === 'sun' ? '⭐' : '🪐'} ${planetData[key].name}`;
+            const icon = planetData[key].isDwarf ? '🪨' : key === 'sun' ? '⭐' : '🪐';
+            btn.textContent = `${icon} ${planetData[key].name}`;
             btn.addEventListener('click', () => focusPlanet(key));
             buttonsContainer.appendChild(btn);
         });
@@ -592,21 +872,37 @@
 
         function startTour() {
             isTourActive = true; tourIndex = 0;
-            focusPlanet(Object.keys(planetData)[tourIndex]);
+            const planets = Object.keys(planetData).filter(k => k !== 'sun');
+            focusPlanet(planets[tourIndex]);
             checkAchievement('tour_guide');
         }
 
         function jumpTime(days) {
             simulationDate.setDate(simulationDate.getDate() + days);
             showEvent(`Time jumped ${days > 0 ? '+' : ''}${days} days`);
+            checkAchievement('time_traveler');
         }
 
         function toggleOrbits() { showOrbits = !showOrbits; Object.values(orbits).forEach(o => o.visible = showOrbits); document.getElementById('toggle-orbits').classList.toggle('active', showOrbits); }
         function toggleTrails() { showTrails = !showTrails; Object.values(planetTrails).forEach(t => t.line.visible = showTrails); document.getElementById('toggle-trails').classList.toggle('active', showTrails); }
         function toggleLabels() { showLabels = !showLabels; Object.values(labels).forEach(l => l.visible = showLabels); document.getElementById('toggle-labels').classList.toggle('active', showLabels); }
-        function toggleMoons() { showMoons = !showMoons; Object.values(moons).forEach(ma => ma.forEach(m => m.mesh.visible = showMoons)); if (issGroup) issGroup.visible = showMoons; document.getElementById('toggle-moons').classList.toggle('active', showMoons); }
+        function toggleMoons() { 
+            showMoons = !showMoons; 
+            Object.values(moons).forEach(ma => ma.forEach(m => m.mesh.visible = showMoons)); 
+            if (issGroup) issGroup.visible = showMoons; 
+            document.getElementById('toggle-moons').classList.toggle('active', showMoons); 
+        }
         function toggleAsteroids() { showAsteroids = !showAsteroids; asteroidBelt.visible = showAsteroids; document.getElementById('toggle-asteroids').classList.toggle('active', showAsteroids); }
-        function toggleDwarfPlanets() { showDwarfPlanets = !showDwarfPlanets; ['pluto', 'ceres'].forEach(k => { if (celestialBodies[k]) celestialBodies[k].mesh.visible = showDwarfPlanets; }); document.getElementById('toggle-dwarf').classList.toggle('active', showDwarfPlanets); }
+        function toggleDwarfPlanets() { 
+            showDwarfPlanets = !showDwarfPlanets; 
+            ['pluto', 'ceres', 'eris', 'makemake', 'haumea'].forEach(k => { 
+                if (celestialBodies[k]) {
+                    celestialBodies[k].mesh.visible = showDwarfPlanets; 
+                    if (orbits[k]) orbits[k].visible = showDwarfPlanets && showOrbits;
+                }
+            }); 
+            document.getElementById('toggle-dwarf').classList.toggle('active', showDwarfPlanets); 
+        }
         function toggleHabitableZone() { 
             showHabitableZone = !showHabitableZone; 
             habitableZoneInner.visible = habitableZoneOuter.visible = showHabitableZone; 
@@ -641,6 +937,13 @@
             const btn = document.querySelector('button[onclick="toggleSearch()"]');
             if (btn) btn.classList.toggle('active', !isVisible);
         }
+        function toggleCalculator() {
+            const panel = document.getElementById('calculator-panel');
+            const isVisible = panel.style.display !== 'none';
+            panel.style.display = isVisible ? 'none' : 'block';
+            const btn = document.querySelector('button[onclick="toggleCalculator()"]');
+            if (btn) btn.classList.toggle('active', !isVisible);
+        }
         function playSound() { 
             soundEnabled = !soundEnabled; 
             document.getElementById('sound-btn').textContent = soundEnabled ? '🔊 Sound ON' : '🔇 Sound OFF'; 
@@ -661,11 +964,11 @@
             const view = document.getElementById('comparison-view');
             view.style.display = 'block';
             const content = document.getElementById('comparison-content');
-            content.innerHTML = '<table class="w-full text-sm"><tr><th>Planet</th><th>Diameter</th><th>Gravity</th><th>Escape Vel.</th><th>Orbital Period</th></tr>';
+            content.innerHTML = '<table class="w-full text-sm"><tr><th class="border-b border-blue-800 p-2">Planet</th><th class="border-b border-blue-800 p-2">Diameter</th><th class="border-b border-blue-800 p-2">Gravity</th><th class="border-b border-blue-800 p-2">Escape Vel.</th><th class="border-b border-blue-800 p-2">Orbital Period</th></tr>';
             Object.keys(planetData).forEach(key => {
                 if (key === 'sun') return;
                 const d = planetData[key];
-                content.innerHTML += `<tr class="border-t border-blue-900"><td>${d.name}</td><td>${d.stats.diameter}</td><td>${d.gravity} m/s²</td><td>${d.escapeVelocity} km/s</td><td>${d.orbitalPeriod} days</td></tr>`;
+                content.innerHTML += `<tr class="border-t border-blue-900"><td class="p-2">${d.name}</td><td class="p-2">${d.stats.diameter}</td><td class="p-2">${d.gravity} m/s²</td><td class="p-2">${d.escapeVelocity} km/s</td><td class="p-2">${d.orbitalPeriod} days</td></tr>`;
             });
             content.innerHTML += '</table>';
         }
@@ -693,7 +996,6 @@
             
             let foundCount = 0;
             
-            // Search planets and dwarf planets
             Object.keys(planetData).forEach(key => {
                 if (planetData[key].name.toLowerCase().includes(query)) {
                     const btn = document.createElement('button');
@@ -706,7 +1008,6 @@
                 }
             });
             
-            // Search moons
             Object.keys(moonData).forEach(planetKey => {
                 moonData[planetKey].forEach((moonInfo, idx) => {
                     if (moonInfo.name.toLowerCase().includes(query)) {
@@ -719,9 +1020,35 @@
                     }
                 });
             });
+
+            if ('halley'.includes(query)) {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left p-2 hover:bg-cyan-900 rounded text-sm border-l-2 border-cyan-500';
+                btn.innerHTML = `☄️ <strong>Halley's Comet</strong> <span class="text-xs text-gray-400">- Famous comet with 76-year orbit</span>`;
+                btn.addEventListener('click', () => { 
+                    targetPlanet = null;
+                    cameraDistance = 400;
+                    showEvent("Following Halley's Comet");
+                });
+                results.appendChild(btn);
+                foundCount++;
+            }
+
+            spaceProbes.forEach(probe => {
+                if (probe.name.toLowerCase().includes(query)) {
+                    const btn = document.createElement('button');
+                    btn.className = 'w-full text-left p-2 hover:bg-orange-900 rounded text-sm border-l-2 border-orange-500';
+                    btn.innerHTML = `🚀 <strong>${probe.name}</strong> <span class="text-xs text-gray-400">- Space mission</span>`;
+                    btn.addEventListener('click', () => { 
+                        showEvent(`Tracking ${probe.name}`);
+                    });
+                    results.appendChild(btn);
+                    foundCount++;
+                }
+            });
             
             if (foundCount === 0) {
-                results.innerHTML = '<p class="text-gray-500 text-xs p-2">No results found. Try: Earth, Mars, Titan, Jupiter...</p>';
+                results.innerHTML = '<p class="text-gray-500 text-xs p-2">No results found. Try: Earth, Mars, Titan, Jupiter, Halley...</p>';
             } else {
                 const summary = document.createElement('p');
                 summary.className = 'text-xs text-green-400 p-2 border-t border-gray-700 mt-2';
@@ -757,6 +1084,10 @@
                 document.getElementById('achievement-popup').style.display = 'block';
                 setTimeout(() => document.getElementById('achievement-popup').style.display = 'none', 4000);
                 document.getElementById('achievement-count').textContent = `${achievements.size}/10`;
+                
+                if (achievements.size >= 10) {
+                    setTimeout(() => checkAchievement('completionist'), 500);
+                }
             }
         }
 
@@ -769,18 +1100,35 @@
 
         function detectConjunctions() {
             const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn'];
+            let nextConjunction = null;
+            let minDiff = 360;
+            
             for (let i = 0; i < planets.length - 1; i++) {
                 for (let j = i + 1; j < planets.length; j++) {
                     const p1 = celestialBodies[planets[i]];
                     const p2 = celestialBodies[planets[j]];
+                    if (!p1 || !p2) continue;
+                    
                     const angle1 = Math.atan2(p1.mesh.position.z, p1.mesh.position.x);
                     const angle2 = Math.atan2(p2.mesh.position.z, p2.mesh.position.x);
-                    const diff = Math.abs(angle1 - angle2) * 180 / Math.PI;
-                    if (diff < 5 || diff > 355) {
-                        showEvent(`Conjunction: ${p1.data.name} & ${p2.data.name}!`);
+                    let diff = Math.abs(angle1 - angle2) * 180 / Math.PI;
+                    
+                    if (diff > 180) diff = 360 - diff;
+                    
+                    if (diff < 5) {
+                        showEvent(`🌟 Conjunction: ${p1.data.name} & ${p2.data.name}!`);
                         return;
                     }
+                    
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        nextConjunction = `${p1.data.name} & ${p2.data.name} (${minDiff.toFixed(1)}°)`;
+                    }
                 }
+            }
+            
+            if (nextConjunction) {
+                document.getElementById('conjunction-indicator').textContent = `Next: ${nextConjunction}`;
             }
         }
 
@@ -793,6 +1141,11 @@
                 const fps = Math.round(1000 / (now - lastTime) * 60);
                 document.getElementById('fps-counter').textContent = fps;
                 lastTime = now;
+                
+                // Check for master achievement
+                if ((now - startTime) > 600000 && !achievements.has('master')) {
+                    checkAchievement('master');
+                }
             }
 
             if (frameCount % 30 === 0) {
@@ -807,17 +1160,26 @@
             if (frameCount % 600 === 0) detectConjunctions();
 
             if (isTourActive && frameCount % 360 === 0) {
-                tourIndex = (tourIndex + 1) % Object.keys(planetData).length;
-                focusPlanet(Object.keys(planetData)[tourIndex]);
+                const planets = Object.keys(planetData).filter(k => k !== 'sun');
+                tourIndex = (tourIndex + 1) % planets.length;
+                focusPlanet(planets[tourIndex]);
             }
 
             Object.keys(celestialBodies).forEach(key => {
-                if (key === 'sun') { sun.rotation.y += 0.001 * animationSpeed; return; }
+                if (key === 'sun') { 
+                    sun.rotation.y += 0.001 * animationSpeed; 
+                    return; 
+                }
                 const body = celestialBodies[key];
                 body.angle += body.data.speed * animationSpeed;
                 body.mesh.position.x = Math.cos(body.angle) * body.data.distance;
                 body.mesh.position.z = Math.sin(body.angle) * body.data.distance;
                 body.mesh.rotation.y += body.data.rotationSpeed * animationSpeed;
+
+                // Rotate clouds independently on Earth
+                if (key === 'earth' && body.mesh.userData.clouds) {
+                    body.mesh.userData.clouds.rotation.y += 0.005 * animationSpeed;
+                }
 
                 if (showTrails && frameCount % 3 === 0) {
                     const trail = planetTrails[key];
@@ -842,9 +1204,31 @@
                 issGroup.position.set(Math.cos(issAngle) * d, Math.sin(issAngle * 1.3) * 1.5, Math.sin(issAngle) * d);
             }
 
+            // Halley's Comet with elliptical orbit
             cometAngle += 0.006 * animationSpeed;
-            cometGroup.position.set(Math.cos(cometAngle) * 230, Math.sin(cometAngle * 3.5) * 60, Math.sin(cometAngle) * 230);
+            const a = 230, b = 160; // semi-major and semi-minor axes
+            cometGroup.position.set(Math.cos(cometAngle) * a, Math.sin(cometAngle * 3.5) * 60, Math.sin(cometAngle) * b);
             cometGroup.lookAt(0, 0, 0);
+
+            // Space probes
+            spaceProbes.forEach(probe => {
+                if (probe.solar) {
+                    // Parker Solar Probe - close solar approaches
+                    probe.angle += probe.speed * animationSpeed;
+                    const dist = probe.distance + Math.sin(probe.angle * 3) * 15;
+                    probe.mesh.position.set(Math.cos(probe.angle) * dist, Math.sin(probe.angle * 2) * 5, Math.sin(probe.angle) * dist);
+                } else if (probe.target === 'pluto') {
+                    // New Horizons heading to Pluto
+                    probe.angle += probe.speed * animationSpeed;
+                    probe.distance = Math.min(310, probe.distance + 0.1);
+                    probe.mesh.position.set(Math.cos(probe.angle) * probe.distance, 0, Math.sin(probe.angle) * probe.distance);
+                } else {
+                    // Voyager 1 - interstellar trajectory
+                    probe.angle += probe.speed * animationSpeed;
+                    probe.distance += 0.05;
+                    probe.mesh.position.set(Math.cos(probe.angle) * probe.distance, probe.distance * 0.3, Math.sin(probe.angle) * probe.distance);
+                }
+            });
 
             asteroids.forEach(a => {
                 a.angle += a.speed * animationSpeed;
@@ -875,18 +1259,25 @@
             renderer.render(scene, camera);
         }
 
-        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+        window.addEventListener('resize', () => { 
+            camera.aspect = window.innerWidth / window.innerHeight; 
+            camera.updateProjectionMatrix(); 
+            renderer.setSize(window.innerWidth, window.innerHeight); 
+        });
 
         setTimeout(() => { 
             const ls = document.getElementById('loading-screen'); 
             ls.style.opacity = '0'; 
             setTimeout(() => ls.style.display = 'none', 500); 
             checkAchievement('first_click');
-        }, 1500);
+        }, 2000);
 
-        document.getElementById('total-objects').textContent = Object.keys(celestialBodies).length + asteroidCount + Object.values(moons).reduce((s, a) => s + a.length, 0);
+        // Calculate total objects
+        let totalObjects = Object.keys(celestialBodies).length + asteroidCount + 
+                          Object.values(moons).reduce((s, a) => s + a.length, 0) + 
+                          spaceProbes.length + 1; // +1 for comet
+        document.getElementById('total-objects').textContent = totalObjects;
 
-        // Tooltip System
         function addTooltip(element, text) {
             const tooltip = document.createElement('div');
             tooltip.className = 'tooltip';
@@ -895,10 +1286,32 @@
             
             element.addEventListener('mouseenter', (e) => {
                 const rect = element.getBoundingClientRect();
-                tooltip.style.left = rect.left + (rect.width / 2) + 'px';
-                tooltip.style.top = (rect.top - 35) + 'px';
-                tooltip.style.transform = 'translateX(-50%)';
                 tooltip.classList.add('show');
+                const tooltipRect = tooltip.getBoundingClientRect();
+                
+                let left = rect.left + (rect.width / 2);
+                let top = rect.top - 35;
+                let isBelow = false;
+                
+                if (left - (tooltipRect.width / 2) < 10) {
+                    left = tooltipRect.width / 2 + 10;
+                }
+                
+                if (left + (tooltipRect.width / 2) > window.innerWidth - 10) {
+                    left = window.innerWidth - (tooltipRect.width / 2) - 10;
+                }
+                
+                if (top < 10) {
+                    top = rect.bottom + 10;
+                    isBelow = true;
+                    tooltip.classList.add('below');
+                } else {
+                    tooltip.classList.remove('below');
+                }
+                
+                tooltip.style.left = left + 'px';
+                tooltip.style.top = top + 'px';
+                tooltip.style.transform = 'translateX(-50%)';
             });
             
             element.addEventListener('mouseleave', () => {
@@ -906,15 +1319,12 @@
             });
         }
 
-        // Add tooltips to all buttons after page load
         setTimeout(() => {
-            // Planet buttons
             Object.keys(planetData).forEach(key => {
                 const btn = document.getElementById(`btn-${key}`);
                 if (btn) addTooltip(btn, `Click to focus on ${planetData[key].name}. ${planetData[key].description}`);
             });
 
-            // Camera views
             const cameraButtons = document.querySelectorAll('.mb-4:nth-child(3) .toggle-btn');
             const cameraTooltips = [
                 'Wide view of the entire solar system',
@@ -928,15 +1338,13 @@
                 if (cameraTooltips[idx]) addTooltip(btn, cameraTooltips[idx]);
             });
 
-            // Display options
             addTooltip(document.getElementById('toggle-orbits'), 'Show/hide orbital paths around the Sun');
             addTooltip(document.getElementById('toggle-trails'), 'Show/hide planet movement trails');
             addTooltip(document.getElementById('toggle-labels'), 'Show/hide planet name labels');
-            addTooltip(document.getElementById('toggle-moons'), 'Show/hide all moons orbiting planets');
+            addTooltip(document.getElementById('toggle-moons'), 'Show/hide all 146+ moons orbiting planets');
             addTooltip(document.getElementById('toggle-asteroids'), 'Show/hide 3500+ asteroids in the belt');
-            addTooltip(document.getElementById('toggle-dwarf'), 'Show/hide dwarf planets (Pluto & Ceres)');
+            addTooltip(document.getElementById('toggle-dwarf'), 'Show/hide dwarf planets (Pluto, Ceres, Eris, Makemake, Haumea)');
 
-            // Advanced features
             const advButtons = document.querySelectorAll('.mb-4:nth-child(5) .toggle-btn');
             const advTooltips = [
                 'Highlight the green zone where liquid water can exist',
@@ -948,11 +1356,11 @@
                 if (advTooltips[idx]) addTooltip(btn, advTooltips[idx]);
             });
 
-            // Utility buttons
             const utilButtons = document.querySelectorAll('.space-y-2.text-xs .toggle-btn');
             const utilTooltips = [
-                'Find any planet or moon quickly by name',
+                'Find any planet, moon, comet or mission by name',
                 'Side-by-side comparison of all planets',
+                'Calculate your weight, escape velocity and light travel time',
                 'Capture and download current view as image',
                 'Toggle sound effects on/off'
             ];
@@ -960,16 +1368,150 @@
                 if (utilTooltips[idx]) addTooltip(btn, utilTooltips[idx]);
             });
 
-            // Time jump buttons
             const timeButtons = document.querySelectorAll('.grid.grid-cols-3 .toggle-btn');
             const timeTooltips = ['-1 Year', '-1 Month', '-1 Day', '+1 Day', '+1 Month', '+1 Year'];
             timeButtons.forEach((btn, idx) => {
                 if (timeTooltips[idx]) addTooltip(btn, `Jump time ${timeTooltips[idx]}`);
             });
 
-            // Speed slider
             addTooltip(document.getElementById('speed-slider'), 'Control simulation speed from -50x (reverse) to +100x (fast forward)');
-        }, 2000);
+        }, 2500);
+
+        // Mission Planning Functions
+        let missionTrajectoryLine = null;
+
+        function toggleMissionPlanner() {
+            const panel = document.getElementById('mission-panel');
+            const isVisible = panel.style.display !== 'none';
+            panel.style.display = isVisible ? 'none' : 'block';
+            const btn = document.querySelector('button[onclick="toggleMissionPlanner()"]');
+            if (btn) btn.classList.toggle('active', !isVisible);
+        }
+
+        function calculateMission() {
+            const from = document.getElementById('mission-from').value;
+            const to = document.getElementById('mission-to').value;
+            const mass = parseFloat(document.getElementById('spacecraft-mass').value);
+            
+            if (!planetData[from] || !planetData[to]) return;
+            
+            const fromPlanet = planetData[from];
+            const toPlanet = planetData[to];
+            
+            // Calculate Hohmann transfer orbit
+            const r1 = fromPlanet.distance * 1.5e6; // Convert to km
+            const r2 = toPlanet.distance * 1.5e6;
+            
+            // Semi-major axis of transfer orbit
+            const a = (r1 + r2) / 2;
+            
+            // Vis-viva equation to calculate delta-v
+            const mu = 1.327e11; // Solar gravitational parameter km³/s²
+            const v1 = Math.sqrt(mu / r1); // Current velocity at departure
+            const v2 = Math.sqrt(mu / r2); // Target velocity at arrival
+            
+            // Transfer orbit velocities
+            const vt1 = Math.sqrt(mu * (2/r1 - 1/a)); // Velocity at departure on transfer
+            const vt2 = Math.sqrt(mu * (2/r2 - 1/a)); // Velocity at arrival on transfer
+            
+            // Delta-v requirements
+            const deltaV1 = Math.abs(vt1 - v1); // Departure burn
+            const deltaV2 = Math.abs(v2 - vt2); // Arrival burn
+            const totalDeltaV = deltaV1 + deltaV2;
+            
+            // Transfer time (half period of transfer ellipse)
+            const transferTime = Math.PI * Math.sqrt(Math.pow(a, 3) / mu) / (24 * 3600); // Convert to days
+            
+            // Fuel consumption (using Tsiolkovsky rocket equation)
+            const isp = 300; // Specific impulse in seconds
+            const g0 = 9.81; // Standard gravity m/s²
+            const deltaVTotal = totalDeltaV * 1000; // Convert to m/s
+            const massRatio = Math.exp(deltaVTotal / (isp * g0));
+            const fuelNeeded = mass * (massRatio - 1);
+            
+            // Check for gravity assists
+            const useVenus = document.getElementById('assist-venus').checked;
+            const useJupiter = document.getElementById('assist-jupiter').checked;
+            let gravityAssistSavings = 0;
+            let extraTime = 0;
+            
+            if (useVenus && to !== 'venus') {
+                gravityAssistSavings += totalDeltaV * 0.15; // 15% savings
+                extraTime += 150; // Add 150 days for Venus flyby
+            }
+            if (useJupiter && to !== 'jupiter') {
+                gravityAssistSavings += totalDeltaV * 0.35; // 35% savings
+                extraTime += 600; // Add 600 days for Jupiter flyby
+            }
+            
+            const finalDeltaV = totalDeltaV - gravityAssistSavings;
+            const finalTransferTime = transferTime + extraTime;
+            const finalFuel = fuelNeeded * (1 - gravityAssistSavings / totalDeltaV);
+            
+            const resultsDiv = document.getElementById('mission-results');
+            resultsDiv.innerHTML = `
+                <p class=\"text-green-400 font-semibold\">✅ Mission Calculated!</p>
+                <p class=\"text-white\"><strong>Route:</strong> ${fromPlanet.name} → ${toPlanet.name}</p>
+                <p class=\"text-blue-400\"><strong>Total Δv:</strong> ${finalDeltaV.toFixed(2)} km/s</p>
+                <p class=\"text-yellow-400\"><strong>Departure Δv:</strong> ${deltaV1.toFixed(2)} km/s</p>
+                <p class=\"text-yellow-400\"><strong>Arrival Δv:</strong> ${deltaV2.toFixed(2)} km/s</p>
+                <p class=\"text-purple-400\"><strong>Transfer Time:</strong> ${Math.round(finalTransferTime)} days (${(finalTransferTime/365).toFixed(1)} years)</p>
+                <p class=\"text-pink-300\"><strong>Fuel Required:</strong> ${Math.round(finalFuel)} kg</p>
+                <p class=\"text-orange-300\"><strong>Total Mass:</strong> ${Math.round(mass + finalFuel)} kg</p>
+                ${gravityAssistSavings > 0 ? `<p class=\"text-green-300\"><strong>⚡ Gravity Assist Savings:</strong> ${gravityAssistSavings.toFixed(2)} km/s</p>` : ''}
+            `;
+            
+            showEvent(`Mission to ${toPlanet.name} planned! ${Math.round(finalTransferTime)} days`);
+            checkAchievement('mission_planner');
+        }
+
+        function visualizeMission() {
+            const from = document.getElementById('mission-from').value;
+            const to = document.getElementById('mission-to').value;
+            
+            if (!celestialBodies[from] || !celestialBodies[to]) return;
+            
+            // Remove old trajectory if exists
+            if (missionTrajectoryLine) {
+                scene.remove(missionTrajectoryLine);
+            }
+            
+            const fromPos = celestialBodies[from].mesh.position;
+            const toPos = celestialBodies[to].mesh.position;
+            
+            // Create elliptical transfer orbit (Hohmann transfer)
+            const points = [];
+            const fromDist = planetData[from].distance;
+            const toDist = planetData[to].distance;
+            const a = (fromDist + toDist) / 2; // Semi-major axis
+            const c = (toDist - fromDist) / 2; // Distance from center to focus
+            const b = Math.sqrt(a * a - c * c); // Semi-minor axis
+            
+            for (let i = 0; i <= 100; i++) {
+                const theta = (i / 100) * Math.PI; // Half ellipse
+                const r = (a * (1 - (c/a) * (c/a))) / (1 + (c/a) * Math.cos(theta));
+                const x = (r * Math.cos(theta)) + (fromDist - c);
+                const z = r * Math.sin(theta);
+                points.push(new THREE.Vector3(x, 0, z));
+            }
+            
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ 
+                color: 0xff6b6b, 
+                linewidth: 3,
+                opacity: 0.8,
+                transparent: true
+            });
+            
+            missionTrajectoryLine = new THREE.Line(geometry, material);
+            scene.add(missionTrajectoryLine);
+            
+            showEvent(`Trajectory visualized! Pink line shows path.`);
+            
+            // Focus camera on the trajectory
+            targetPlanet = null;
+            cameraDistance = Math.max(fromDist, toDist) * 2.5;
+        }
 
         animate();
     </script>
