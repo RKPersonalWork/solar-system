@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -50,6 +50,25 @@
         @keyframes dash { to { stroke-dashoffset: -1000; } }
         .transfer-orbit { stroke: #ff6b6b; stroke-width: 2; fill: none; opacity: 0.7; }
         .gravity-assist-arrow { fill: #ffd93d; opacity: 0.8; }
+        
+        /* Physics Sandbox Mode */
+        .sandbox-panel { background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(20, 40, 20, 0.95) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(100, 255, 100, 0.4); }
+        .sandbox-object { background: linear-gradient(135deg, rgba(50, 200, 50, 0.2), rgba(50, 150, 50, 0.2)); border: 1px solid rgba(100, 255, 100, 0.3); transition: all 0.3s ease; }
+        .sandbox-object:hover { transform: scale(1.02); border-color: rgba(100, 255, 100, 0.8); box-shadow: 0 0 15px rgba(100, 255, 100, 0.5); }
+        .slider-container { position: relative; }
+        .slider-value { position: absolute; right: 0; top: -20px; font-size: 10px; color: #4ade80; }
+        
+        /* Exoplanet Explorer */
+        .exoplanet-panel { background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(40, 20, 60, 0.95) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(150, 100, 255, 0.4); }
+        .exoplanet-card { background: linear-gradient(135deg, rgba(100, 50, 200, 0.2), rgba(50, 100, 200, 0.2)); border: 1px solid rgba(150, 100, 255, 0.3); transition: all 0.3s ease; cursor: pointer; }
+        .exoplanet-card:hover { transform: scale(1.05); border-color: rgba(150, 100, 255, 0.8); box-shadow: 0 0 20px rgba(150, 100, 255, 0.5); }
+        
+        /* Historical Timeline */
+        .timeline-panel { background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(30, 20, 10, 0.95) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(255, 200, 100, 0.4); }
+        .timeline-event { background: linear-gradient(135deg, rgba(255, 200, 100, 0.2), rgba(255, 150, 50, 0.2)); border: 1px solid rgba(255, 200, 100, 0.3); transition: all 0.3s ease; cursor: pointer; }
+        .timeline-event:hover { transform: scale(1.02); border-color: rgba(255, 200, 100, 0.8); box-shadow: 0 0 15px rgba(255, 200, 100, 0.5); }
+        .timeline-marker { position: absolute; width: 20px; height: 20px; background: radial-gradient(circle, rgba(255, 200, 100, 1), rgba(255, 150, 50, 0.5)); border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.8); z-index: 5; pointer-events: none; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.7; } }
     </style>
 </head>
 <body class="bg-black">
@@ -73,10 +92,17 @@
         <p id="achievement-text"></p>
     </div>
 
-    <div id="search-panel" class="absolute top-20 left-4 text-white search-panel p-4 rounded-lg max-w-xs z-10" style="display:none;">
+    <div id="search-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform text-white search-panel p-4 rounded-lg w-80 max-w-md z-40 shadow-2xl" style="display:none;">
         <div class="flex justify-between items-center mb-3">
             <h3 class="text-lg font-bold title">🔍 Search Objects</h3>
             <button onclick="toggleSearch()" class="text-white text-xl hover:text-red-400">&times;</button>
+        </div>
+        <div class="mb-2 text-xs text-gray-300">Filters:</div>
+        <div class="grid grid-cols-2 gap-2 text-xs mb-3">
+            <button id="filter-planet" class="toggle-btn active w-full">🪐 Planets</button>
+            <button id="filter-moon" class="toggle-btn active w-full">🌙 Moons</button>
+            <button id="filter-comet" class="toggle-btn active w-full">☄️ Comets</button>
+            <button id="filter-mission" class="toggle-btn active w-full">🚀 Missions</button>
         </div>
         <input type="text" id="search-input" placeholder="Type planet or moon name..." class="w-full p-2 rounded bg-gray-800 text-white border border-blue-500 mb-3 focus:border-purple-400 focus:outline-none" autocomplete="off">
         <div id="search-results" class="space-y-1 max-h-80 overflow-y-auto"></div>
@@ -99,7 +125,7 @@
         <div id="comparison-content" class="text-white"></div>
     </div>
 
-    <div id="calculator-panel" class="absolute top-20 right-4 text-white calculator-panel p-4 rounded-lg max-w-xs z-10" style="display:none;">
+    <div id="calculator-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform text-white calculator-panel p-4 rounded-lg w-80 max-w-md z-40 shadow-2xl" style="display:none;">
         <div class="flex justify-between items-center mb-3">
             <h3 class="text-lg font-bold title">🧮 Science Calculator</h3>
             <button onclick="toggleCalculator()" class="text-white text-xl hover:text-red-400">&times;</button>
@@ -190,6 +216,10 @@
             <h2 class="text-xl font-semibold mb-2" id="planet-name">The Sun</h2>
             <p class="text-sm" id="planet-description">The star at the center of our solar system.</p>
             <div class="mt-2 text-xs space-y-1" id="planet-stats"></div>
+            <div class="mt-3 flex items-center gap-2">
+                <button id="pin-btn" class="toggle-btn text-xs px-3 py-1">📌 Pin</button>
+                <span class="text-[10px] text-gray-400">Save this object to quick pins</span>
+            </div>
             <div id="fun-fact" class="fun-fact mt-3 hidden">
                 <p class="text-xs font-semibold text-purple-300">💡 Fun Fact</p>
                 <p class="text-xs mt-1" id="fact-text"></p>
@@ -202,6 +232,11 @@
                 <p class="text-xs font-semibold text-green-300">🔭 Discovery</p>
                 <p class="text-xs mt-1" id="discovery-text"></p>
             </div>
+        </div>
+
+        <div id="pinned-container" class="mt-4 hidden">
+            <h3 class="text-sm font-semibold text-gray-400 mb-2">📌 Pinned:</h3>
+            <div id="pinned-cards" class="space-y-2"></div>
         </div>
         
         <div class="space-y-2">
@@ -225,7 +260,7 @@
         </div>
     </div>
 
-    <div class="absolute top-4 right-4 text-white control-panel p-4 rounded-lg z-10 max-w-xs">
+    <div class="absolute top-4 right-4 text-white control-panel p-4 rounded-lg z-10 max-w-xs max-h-screen overflow-y-auto" style="max-height: 95vh;">
         <div class="mb-4">
             <label class="text-sm font-semibold block mb-2">⚡ Speed: <span id="speed-display">1.0x</span></label>
             <input type="range" id="speed-slider" min="-50" max="100" step="1" value="1" class="w-full">
@@ -281,11 +316,22 @@
             </div>
         </div>
 
+        <div class="mb-4">
+            <p class="text-sm font-semibold mb-2">🌈 Visual Effects</p>
+            <div class="space-y-2 text-xs">
+                <button onclick="toggleAuroras()" class="toggle-btn w-full">✨ Auroras</button>
+                <button onclick="toggleMagnetosphere()" class="toggle-btn w-full">🧲 Magnetosphere</button>
+                <button onclick="toggleSolarWind()" class="toggle-btn w-full">💨 Solar Wind</button>
+                <button id="toggle-textures" onclick="toggleTextures()" class="toggle-btn w-full active">🖼️ Realistic Textures</button>
+            </div>
+        </div>
+
         <div class="space-y-2 text-xs">
             <button onclick="toggleSearch()" class="toggle-btn w-full">🔍 Search</button>
             <button onclick="showComparison()" class="toggle-btn w-full">📊 Compare</button>
             <button onclick="toggleCalculator()" class="toggle-btn w-full">🧮 Calculator</button>
             <button onclick="toggleMissionPlanner()" class="toggle-btn w-full">🚀 Mission Plan</button>
+            <button onclick="toggleExoplanets()" class="toggle-btn w-full">🌍 Exoplanets</button>
             <button onclick="takeScreenshot()" class="toggle-btn w-full">📸 Screenshot</button>
             <button onclick="playSound()" class="toggle-btn w-full" id="sound-btn">🔇 Sound OFF</button>
         </div>
@@ -295,7 +341,10 @@
         <p class="font-semibold mb-1">🎮 Controls:</p>
         <p>🖱️ Left Drag: Rotate | ⚙️ Scroll: Zoom</p>
         <p>📱 Touch: Pan & Pinch | 🖱️ Click: Select</p>
-        <p id="distance-indicator" class="mt-2 text-blue-300">Distance: -</p>
+    </div>
+
+    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-xs bg-black bg-opacity-80 p-4 rounded-lg backdrop-blur-sm text-center">
+        <p id="distance-indicator" class="text-blue-300">Distance: -</p>
         <p id="speed-indicator" class="text-green-300">Orbital Speed: -</p>
         <p id="conjunction-indicator" class="text-purple-300">Next Conjunction: Calculating...</p>
     </div>
@@ -329,15 +378,27 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
+        const textureLoader = new THREE.TextureLoader();
+        const maxAniso = renderer.capabilities.getMaxAnisotropy();
+
         let showOrbits = true, showTrails = true, showLabels = true, showMoons = true, showAsteroids = true;
         let showDwarfPlanets = true, showHabitableZone = false, showLagrangePoints = false;
-        let soundEnabled = false, isTourActive = false, tourIndex = 0, showAxialTilt = false, showEclipses = false;
+        let useRealisticTextures = true;
+        let soundEnabled = false, isTourActive = false, tourIndex = 0, showAxialTilt = false, showEclipses = false, showExoplanets = false;
+        let targetOverride = null; // allows focusing non-planet targets like comets
         let simulationDate = new Date(2024, 0, 1, 0, 0, 0);
         let startDate = new Date(2024, 0, 1, 0, 0, 0);
         let achievements = new Set();
         let audioContext = null;
         let visitedPlanets = new Set();
         let startTime = Date.now();
+        let currentSelection = { type: 'planet', key: 'sun' };
+        const pinnedItems = [];
+        const maxPinnedItems = 4;
+        
+        // Aurora & Magnetosphere settings
+        let showAuroras = false, showMagnetosphere = false, showSolarWind = false;
+        let auroras = {}, magnetospheres = {}, solarWindParticles = null;
 
         const ambientLight = new THREE.AmbientLight(0x222222, 0.5);
         scene.add(ambientLight);
@@ -444,52 +505,264 @@
             ]
         };
 
-        const celestialBodies = {}, orbits = {}, planetTrails = {}, labels = {}, moons = {};
+        function buildSearchIndex() {
+            const entries = [];
+            Object.keys(planetData).forEach(key => {
+                if (key === 'sun') return;
+                entries.push({ type: 'planet', key, name: planetData[key].name, description: planetData[key].description });
+            });
+            Object.keys(moonData).forEach(parent => {
+                (moonData[parent] || []).forEach((moon, idx) => {
+                    entries.push({ type: 'moon', parent, index: idx, name: moon.name, description: `Moon of ${planetData[parent].name}` });
+                });
+            });
+            entries.push({ type: 'comet', key: 'halley', name: "Halley's Comet", description: 'Short-period comet (~76 years)' });
+            (spaceProbes || []).forEach(probe => {
+                entries.push({ type: 'mission', key: probe.name.toLowerCase(), name: probe.name, description: 'Space mission/probe' });
+            });
+            return entries;
+        }
+        let searchIndex = [];
+
+        const celestialBodies = {}, orbits = {}, planetTrails = {}, labels = {}, moons = {}, planetTextures = {}, moonTextures = {};
+        let asteroidTexture = null;
+        const textureFiles = {
+            sun: 'textures/sun.jpg',
+            mercury: 'textures/mercury.jpg',
+            venus: 'textures/venus.jpg',
+            earth: 'textures/earth.jpg',
+            mars: 'textures/mars.jpg',
+            jupiter: 'textures/jupiter.jpg',
+            saturn: 'textures/saturn.jpg',
+            uranus: 'textures/uranus.jpg',
+            neptune: 'textures/neptune.jpg',
+            pluto: 'textures/pluto.jpg',
+            moon: 'textures/moon.jpg'
+        };
         let issGroup = null, cometAngle = 0, issAngle = 0;
         let spaceProbes = [];
+        let sunGlare = null;
+        const sunRotationSpeed = 0.01;
 
         function createPlanetTexture(type) {
             const canvas = document.createElement('canvas');
             canvas.width = 1024; canvas.height = 512;
             const ctx = canvas.getContext('2d');
-            
+
+            const rand = () => Math.random();
+            const noise = (x, y, scale = 80) => {
+                const nx = x / scale, ny = y / scale;
+                return (Math.sin(nx * 2.1 + ny * 0.9) + Math.sin(nx * 1.3 - ny * 1.7) + Math.sin(nx * 3.5 + ny * 2.5)) * 0.33 + 0.5;
+            };
+            const addShading = () => {
+                // Soft limb darkening for depth
+                const shade = ctx.createRadialGradient(512, 256, 0, 512, 256, 520);
+                shade.addColorStop(0, 'rgba(0,0,0,0)');
+                shade.addColorStop(0.7, 'rgba(0,0,0,0)');
+                shade.addColorStop(1, 'rgba(0,0,0,0.35)');
+                ctx.globalCompositeOperation = 'multiply';
+                ctx.fillStyle = shade;
+                ctx.fillRect(0, 0, 1024, 512);
+                ctx.globalCompositeOperation = 'source-over';
+            };
+
             if (type === 'sun') {
                 const grad = ctx.createRadialGradient(512, 256, 0, 512, 256, 512);
-                grad.addColorStop(0, '#FFF8E7'); grad.addColorStop(0.3, '#FFD700'); grad.addColorStop(0.6, '#FFA500'); grad.addColorStop(1, '#FF4500');
-                ctx.fillStyle = grad; ctx.fillRect(0, 0, 1024, 512);
-                for (let i = 0; i < 400; i++) {
-                    ctx.fillStyle = `rgba(255, ${200 + Math.random() * 55}, 0, ${Math.random() * 0.5})`;
-                    ctx.beginPath(); ctx.arc(Math.random() * 1024, Math.random() * 512, Math.random() * 50, 0, Math.PI * 2); ctx.fill();
+                grad.addColorStop(0, '#fff8e7');
+                grad.addColorStop(0.3, '#ffd700');
+                grad.addColorStop(0.6, '#ff9a1f');
+                grad.addColorStop(1, '#ff4500');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 1024, 512);
+                for (let i = 0; i < 500; i++) {
+                    ctx.fillStyle = `rgba(255, ${200 + rand() * 55}, 0, ${0.15 + rand() * 0.5})`;
+                    ctx.beginPath();
+                    ctx.arc(rand() * 1024, rand() * 512, rand() * 60, 0, Math.PI * 2);
+                    ctx.fill();
                 }
             } else if (type === 'earth') {
-                ctx.fillStyle = '#1a4f8f'; ctx.fillRect(0, 0, 1024, 512);
-                ctx.fillStyle = '#2a9d4e';
-                for (let i = 0; i < 25; i++) {
+                ctx.fillStyle = '#0f2f5f';
+                ctx.fillRect(0, 0, 1024, 512);
+                // Continents
+                ctx.fillStyle = '#3aa35d';
+                for (let i = 0; i < 35; i++) {
                     ctx.beginPath();
-                    const sx = Math.random() * 1024, sy = Math.random() * 512;
+                    const sx = rand() * 1024, sy = rand() * 512;
                     ctx.moveTo(sx, sy);
-                    for (let j = 0; j < 15; j++) ctx.lineTo(sx + (Math.random() - 0.5) * 300, sy + (Math.random() - 0.5) * 300);
+                    for (let j = 0; j < 20; j++) ctx.lineTo(sx + (rand() - 0.5) * 280, sy + (rand() - 0.5) * 220);
                     ctx.closePath(); ctx.fill();
                 }
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath(); ctx.arc(512, 100, 60, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(512, 412, 60, 0, Math.PI * 2); ctx.fill();
+                // Polar caps
+                ctx.fillStyle = '#f7f7f7';
+                ctx.beginPath(); ctx.arc(512, 90, 70, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(512, 422, 70, 0, Math.PI * 2); ctx.fill();
+                // Cloudy wisps
+                ctx.fillStyle = 'rgba(255,255,255,0.25)';
+                for (let i = 0; i < 80; i++) {
+                    ctx.beginPath();
+                    ctx.ellipse(rand() * 1024, rand() * 512, 80 + rand() * 80, 20 + rand() * 20, rand() * Math.PI, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (['jupiter', 'saturn', 'uranus', 'neptune'].includes(type)) {
+                const base = { jupiter: '#d8b48a', saturn: '#e6c99b', uranus: '#74d7e4', neptune: '#4c6df5' }[type];
+                ctx.fillStyle = base;
+                ctx.fillRect(0, 0, 1024, 512);
+                const bandCount = type === 'jupiter' ? 24 : type === 'saturn' ? 20 : 16;
+                for (let i = 0; i < bandCount; i++) {
+                    const y = (i / bandCount) * 512;
+                    const h = 10 + rand() * 16;
+                    const hueShift = (rand() - 0.5) * 10;
+                    ctx.fillStyle = type === 'neptune' ? `rgba(80,120,255,${0.35 + rand() * 0.4})` : `hsla(35,60%,${60 + hueShift}%,${0.4 + rand() * 0.35})`;
+                    ctx.fillRect(0, y, 1024, h);
+                }
+                // Storms / spots
+                for (let i = 0; i < 12; i++) {
+                    const r = 10 + rand() * 30;
+                    ctx.fillStyle = `rgba(200,120,80,${0.2 + rand() * 0.4})`;
+                    ctx.beginPath();
+                    ctx.ellipse(rand() * 1024, rand() * 512, r * 1.5, r, rand() * Math.PI, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             } else {
-                const colors = { 
-                    mercury: '#8C7853', venus: '#ffc649', mars: '#cd5c5c', jupiter: '#d4a574', 
-                    saturn: '#e5c287', uranus: '#4fd0e7', neptune: '#4166f5', pluto: '#c9a687', 
-                    ceres: '#8b8680', eris: '#cccccc', makemake: '#d4a574', haumea: '#ffeeee'
+                const baseColors = { 
+                    mercury: '#8c7a63', venus: '#d9b166', mars: '#c4523d', pluto: '#c9a687', 
+                    ceres: '#8b8680', eris: '#cfcfcf', makemake: '#d4a574', haumea: '#f2eaea' 
                 };
-                ctx.fillStyle = colors[type] || '#888'; ctx.fillRect(0, 0, 1024, 512);
+                ctx.fillStyle = baseColors[type] || '#888';
+                ctx.fillRect(0, 0, 1024, 512);
+                // Craters / noise
+                for (let y = 0; y < 512; y += 4) {
+                    for (let x = 0; x < 1024; x += 4) {
+                        const n = noise(x, y, 55);
+                        const shade = Math.floor(n * 25);
+                        ctx.fillStyle = `rgba(0,0,0,${0.04 + shade / 255})`;
+                        ctx.fillRect(x, y, 4, 4);
+                    }
+                }
+                for (let i = 0; i < 120; i++) {
+                    const r = 6 + rand() * 20;
+                    ctx.strokeStyle = `rgba(0,0,0,${0.15 + rand() * 0.15})`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(rand() * 1024, rand() * 512, r, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+            addShading();
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function getPlanetTexture(key) {
+            if (planetTextures[key]) return planetTextures[key];
+            let tex = null;
+            if (textureFiles[key]) {
+                tex = textureLoader.load(textureFiles[key]);
+                tex.anisotropy = maxAniso;
+            }
+            if (!tex) tex = createPlanetTexture(key);
+            planetTextures[key] = tex;
+            return tex;
+        }
+
+        function createSunGlareTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
+            grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+            grad.addColorStop(0.2, 'rgba(255,220,150,0.6)');
+            grad.addColorStop(0.5, 'rgba(255,180,80,0.25)');
+            grad.addColorStop(1, 'rgba(255,160,50,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 512, 512);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createMoonTexture(name = 'moon') {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            const base = name.toLowerCase().includes('titan') ? '#b5966d' : '#bfbfbf';
+            ctx.fillStyle = base;
+            ctx.fillRect(0, 0, 512, 512);
+
+            const noise = () => (Math.random() - 0.5) * 0.4;
+            for (let y = 0; y < 512; y++) {
+                for (let x = 0; x < 512; x++) {
+                    const n = (noise() + noise() + noise()) * 0.5;
+                    const shade = Math.floor(n * 30);
+                    ctx.fillStyle = `rgba(0,0,0,${0.15 + shade / 255})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            // Craters
+            const craterCount = 120;
+            for (let i = 0; i < craterCount; i++) {
+                const r = 6 + Math.random() * 28;
+                const x = Math.random() * 512;
+                const y = Math.random() * 512;
+                ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+                ctx.beginPath();
+                ctx.arc(x - r * 0.2, y - r * 0.2, r * 0.5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            const shade = ctx.createRadialGradient(256, 256, 0, 256, 256, 270);
+            shade.addColorStop(0, 'rgba(0,0,0,0)');
+            shade.addColorStop(0.7, 'rgba(0,0,0,0)');
+            shade.addColorStop(1, 'rgba(0,0,0,0.35)');
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.fillStyle = shade;
+            ctx.fillRect(0, 0, 512, 512);
+            ctx.globalCompositeOperation = 'source-over';
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createAsteroidTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#6b5d52';
+            ctx.fillRect(0, 0, 512, 512);
+            for (let i = 0; i < 4000; i++) {
+                const size = Math.random() * 3;
+                ctx.fillStyle = `rgba(0,0,0,${0.2 + Math.random() * 0.3})`;
+                ctx.beginPath();
+                ctx.arc(Math.random() * 512, Math.random() * 512, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            for (let i = 0; i < 40; i++) {
+                const r = 8 + Math.random() * 24;
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(Math.random() * 512, Math.random() * 512, r, 0, Math.PI * 2);
+                ctx.stroke();
             }
             return new THREE.CanvasTexture(canvas);
         }
 
         // Enhanced Sun with larger lens flare
         const sunGeo = new THREE.SphereGeometry(planetData.sun.radius, 64, 64);
-        const sun = new THREE.Mesh(sunGeo, new THREE.MeshBasicMaterial({ map: createPlanetTexture('sun'), color: 0xfdb813 }));
+        const sun = new THREE.Mesh(sunGeo, new THREE.MeshBasicMaterial({ map: getPlanetTexture('sun'), color: 0xfdb813 }));
         scene.add(sun);
         celestialBodies.sun = { mesh: sun, data: planetData.sun, angle: 0 };
+
+        const glareTexture = createSunGlareTexture();
+        sunGlare = new THREE.Sprite(new THREE.SpriteMaterial({ 
+            map: glareTexture, 
+            color: 0xffffff, 
+            transparent: true, 
+            blending: THREE.AdditiveBlending,
+            depthWrite: false 
+        }));
+        sunGlare.scale.set(180, 180, 1);
+        scene.add(sunGlare);
 
         for (let i = 0; i < 6; i++) {
             const glow = new THREE.Mesh(new THREE.SphereGeometry(planetData.sun.radius * (1.1 + i * 0.15), 32, 32),
@@ -500,13 +773,20 @@
         const asteroidBelt = new THREE.Group();
         scene.add(asteroidBelt);
         const asteroids = [], asteroidCount = 3500;
+        asteroidTexture = createAsteroidTexture();
         for (let i = 0; i < asteroidCount; i++) {
             const geo = new THREE.DodecahedronGeometry(0.3 + Math.random() * 0.6, 0);
-            const asteroid = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: [0x8B7355, 0x6B5D52, 0x7A6A5A][Math.floor(Math.random() * 3)], roughness: 0.95 }));
+            const baseColor = [0x8B7355, 0x6B5D52, 0x7A6A5A][Math.floor(Math.random() * 3)];
+            const material = new THREE.MeshStandardMaterial({ 
+                color: baseColor, 
+                roughness: 0.95,
+                map: useRealisticTextures ? asteroidTexture : null 
+            });
+            const asteroid = new THREE.Mesh(geo, material);
             const angle = Math.random() * Math.PI * 2, distance = 115 + Math.random() * 20;
             asteroid.position.set(Math.cos(angle) * distance, (Math.random() - 0.5) * 12, Math.sin(angle) * distance);
             asteroidBelt.add(asteroid);
-            asteroids.push({ mesh: asteroid, angle, distance, speed: 0.003 + Math.random() * 0.002, rotSpeed: { x: (Math.random() - 0.5) * 0.02, y: (Math.random() - 0.5) * 0.02 } });
+            asteroids.push({ mesh: asteroid, angle, distance, speed: 0.003 + Math.random() * 0.002, rotSpeed: { x: (Math.random() - 0.5) * 0.02, y: (Math.random() - 0.5) * 0.02 }, baseColor });
         }
 
         // Halley's Comet with 76-year elliptical orbit
@@ -541,6 +821,7 @@
             { mesh: newHorizons, name: 'New Horizons', angle: Math.PI, distance: 300, speed: 0.00005, target: 'pluto' },
             { mesh: parkerProbe, name: 'Parker Solar Probe', angle: 0, distance: 25, speed: 0.05, solar: true }
         ];
+        searchIndex = buildSearchIndex();
 
         let habitableZoneInner, habitableZoneOuter, lagrangePoints = [];
         habitableZoneInner = new THREE.Mesh(new THREE.RingGeometry(75, 76, 128), new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide, transparent: true, opacity: 0.3 }));
@@ -576,8 +857,10 @@
             scene.add(trail);
             planetTrails[key] = { line: trail, positions: [], maxLength: 100 };
 
+            const texture = getPlanetTexture(key);
             const planet = new THREE.Mesh(new THREE.SphereGeometry(data.radius, 64, 64), 
-                new THREE.MeshStandardMaterial({ map: createPlanetTexture(key), roughness: key.includes('jupiter') || key.includes('saturn') || key.includes('uranus') || key.includes('neptune') ? 0.3 : 0.85 }));
+                new THREE.MeshStandardMaterial({ map: texture, roughness: key.includes('jupiter') || key.includes('saturn') || key.includes('uranus') || key.includes('neptune') ? 0.3 : 0.85 }));
+            planetTextures[key] = texture;
             planet.position.x = data.distance;
             if (showAxialTilt) planet.rotation.z = (data.tilt || 0) * Math.PI / 180;
             scene.add(planet);
@@ -618,6 +901,7 @@
                     })
                 );
                 planet.add(cityLights);
+                planet.userData.cityLights = cityLights;
 
                 // Animated clouds
                 const cloudsCanvas = document.createElement('canvas');
@@ -659,9 +943,28 @@
             if (data.hasMoons && moonData[key]) {
                 moons[key] = [];
                 moonData[key].forEach(moonInfo => {
-                    const moonMesh = new THREE.Mesh(new THREE.SphereGeometry(moonInfo.radius, 32, 32), new THREE.MeshStandardMaterial({ color: moonInfo.color, roughness: 0.95 }));
+                    const moonKey = moonInfo.name || `${key}-moon-${moonInfo.radius}`;
+                    let moonTex = moonTextures[moonKey];
+                    if (!moonTex) {
+                        if (textureFiles.moon) {
+                            moonTex = moonTextures.__file || textureLoader.load(textureFiles.moon);
+                            moonTex.anisotropy = maxAniso;
+                            moonTextures.__file = moonTex;
+                        } else {
+                            moonTex = createMoonTexture(moonKey);
+                        }
+                        moonTextures[moonKey] = moonTex;
+                    }
+                    const moonMesh = new THREE.Mesh(
+                        new THREE.SphereGeometry(moonInfo.radius, 32, 32), 
+                        new THREE.MeshStandardMaterial({ 
+                            color: moonInfo.color, 
+                            roughness: 0.95,
+                            map: useRealisticTextures ? moonTex : null 
+                        })
+                    );
                     planet.add(moonMesh);
-                    moons[key].push({ mesh: moonMesh, angle: Math.random() * Math.PI * 2, distance: moonInfo.distance, speed: moonInfo.speed, name: moonInfo.name });
+                    moons[key].push({ mesh: moonMesh, angle: Math.random() * Math.PI * 2, distance: moonInfo.distance, speed: moonInfo.speed, name: moonInfo.name, baseColor: moonInfo.color, texKey: moonInfo.name || `${key}-moon-${moonInfo.radius}` });
                 });
             }
         });
@@ -734,6 +1037,10 @@
 
         function focusPlanet(key) {
             targetPlanet = key;
+            targetOverride = null;
+            const bodyData = celestialBodies[key].data;
+            const idealDistance = Math.max(bodyData.radius * 6, Math.min(450, bodyData.distance * 1.7));
+            cameraDistance = idealDistance;
             const data = celestialBodies[key].data;
             
             if (key !== 'sun') {
@@ -759,6 +1066,8 @@
             if (data.mythology) document.getElementById('mythology-text').textContent = data.mythology;
             document.getElementById('discovery').classList.toggle('hidden', !data.discovery);
             if (data.discovery) document.getElementById('discovery-text').textContent = data.discovery;
+            currentSelection = { type: 'planet', key };
+            updatePinButton();
             
             document.querySelectorAll('.planet-button').forEach(btn => btn.classList.remove('active'));
             const btn = document.getElementById(`btn-${key}`);
@@ -800,6 +1109,7 @@
             const planet = celestialBodies[planetKey];
             
             targetPlanet = planetKey;
+            targetOverride = null;
             cameraDistance = (moonInfo.radius || 1) * 20;
             
             document.getElementById('planet-name').textContent = moon.name;
@@ -819,8 +1129,35 @@
             document.querySelectorAll('#moon-buttons .planet-button').forEach((btn, idx) => {
                 btn.classList.toggle('active', idx === moonIndex);
             });
+            currentSelection = { type: 'moon', parent: planetKey, index: moonIndex, name: moon.name };
+            updatePinButton();
             
             checkAchievement('moon_hunter');
+        }
+
+        function focusComet() {
+            targetPlanet = null;
+            targetOverride = cometGroup.position;
+            cameraDistance = 320;
+            
+            document.getElementById('planet-name').textContent = 'Halley\'s Comet';
+            document.getElementById('planet-description').textContent = 'Iconic short-period comet that returns roughly every 76 years.';
+            const statsDiv = document.getElementById('planet-stats');
+            statsDiv.innerHTML = '';
+            statsDiv.innerHTML += '<p class=\"text-gray-400\"><strong>Orbital period:</strong> ~76 years</p>';
+            statsDiv.innerHTML += '<p class=\"text-gray-400\"><strong>Type:</strong> Short-period comet</p>';
+            statsDiv.innerHTML += '<p class=\"text-gray-400\"><strong>Next perihelion:</strong> 2061 (approx)</p>';
+            
+            document.getElementById('fun-fact').classList.add('hidden');
+            document.getElementById('mythology').classList.add('hidden');
+            document.getElementById('discovery').classList.add('hidden');
+            
+            document.querySelectorAll('.planet-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#moon-buttons .planet-button').forEach(btn => btn.classList.remove('active'));
+            currentSelection = { type: 'comet', key: 'halley' };
+            updatePinButton();
+            
+            showEvent('Focusing on Halley\'s Comet');
         }
 
         function updateCalculator(planetData) {
@@ -863,6 +1200,7 @@
         focusPlanet('sun');
 
         function setCameraPreset(preset) {
+            targetOverride = null;
             if (preset === 'overview') { cameraDistance = 600; cameraRotation = { x: Math.PI / 5, y: 0 }; targetPlanet = null; }
             else if (preset === 'top') { cameraDistance = 500; cameraRotation = { x: Math.PI / 2 - 0.1, y: 0 }; targetPlanet = null; }
             else if (preset === 'side') { cameraDistance = 500; cameraRotation = { x: 0, y: 0 }; targetPlanet = null; }
@@ -929,20 +1267,118 @@
             if (btn) btn.classList.toggle('active', showEclipses);
             if (showEclipses) showEvent('Eclipse detection enabled');
         }
+        function toggleAuroras() {
+            showAuroras = !showAuroras;
+            const btn = document.querySelector('button[onclick="toggleAuroras()"]');
+            if (btn) btn.classList.toggle('active', showAuroras);
+            Object.values(auroras).forEach(a => {
+                if (a.mesh) a.mesh.visible = showAuroras;
+            });
+            if (showAuroras) showEvent('Aurora effects enabled');
+        }
+        function toggleMagnetosphere() {
+            showMagnetosphere = !showMagnetosphere;
+            const btn = document.querySelector('button[onclick="toggleMagnetosphere()"]');
+            if (btn) btn.classList.toggle('active', showMagnetosphere);
+            Object.values(magnetospheres).forEach(m => {
+                if (m.mesh) m.mesh.visible = showMagnetosphere;
+                if (m.lines) m.lines.visible = showMagnetosphere;
+            });
+            if (showMagnetosphere) showEvent('Magnetospheres enabled');
+        }
+        function toggleSolarWind() {
+            showSolarWind = !showSolarWind;
+            const btn = document.querySelector('button[onclick="toggleSolarWind()"]');
+            if (btn) btn.classList.toggle('active', showSolarWind);
+            if (solarWindParticles) solarWindParticles.visible = showSolarWind;
+            if (showSolarWind) showEvent('Solar wind particles enabled');
+        }
+        function toggleTextures() {
+            // Switch between procedural textures and flat color materials
+            useRealisticTextures = !useRealisticTextures;
+            const btn = document.getElementById('toggle-textures');
+            if (btn) btn.classList.toggle('active', useRealisticTextures);
+
+            Object.keys(celestialBodies).forEach(key => {
+                const body = celestialBodies[key];
+                if (!body || !body.mesh || !body.mesh.material) return;
+                const mat = body.mesh.material;
+                if (useRealisticTextures) {
+                    if (planetTextures[key]) {
+                        mat.map = planetTextures[key];
+                        mat.color = new THREE.Color(0xffffff);
+                    }
+                } else {
+                    mat.map = null;
+                    mat.color = new THREE.Color(body.data.color || 0xffffff);
+                }
+                mat.needsUpdate = true;
+            });
+
+            Object.values(moons).forEach(moonArray => {
+                moonArray.forEach(moon => {
+                    if (!moon.mesh || !moon.mesh.material) return;
+                    const mat = moon.mesh.material;
+                    if (useRealisticTextures) {
+                        const tex = moonTextures[moon.texKey] || moonTextures[moon.name];
+                        if (tex) mat.map = tex;
+                        mat.color = new THREE.Color(0xffffff);
+                    } else {
+                        mat.map = null;
+                        mat.color = new THREE.Color(moon.baseColor || 0xffffff);
+                    }
+                    mat.needsUpdate = true;
+                });
+            });
+
+            asteroids.forEach(a => {
+                if (!a.mesh || !a.mesh.material) return;
+                const mat = a.mesh.material;
+                if (useRealisticTextures && asteroidTexture) {
+                    mat.map = asteroidTexture;
+                    mat.color = new THREE.Color(0xffffff);
+                } else {
+                    mat.map = null;
+                    mat.color = new THREE.Color(a.baseColor || 0x777777);
+                }
+                mat.needsUpdate = true;
+            });
+
+            // Hide ancillary Earth layers when simplified
+            if (celestialBodies.earth && celestialBodies.earth.mesh) {
+                const earthMesh = celestialBodies.earth.mesh;
+                if (earthMesh.userData.clouds) earthMesh.userData.clouds.visible = useRealisticTextures;
+                if (earthMesh.userData.cityLights) earthMesh.userData.cityLights.visible = useRealisticTextures;
+            }
+
+            showEvent(useRealisticTextures ? 'Realistic textures enabled' : 'Simplified colors enabled');
+        }
         function toggleSearch() {
             const panel = document.getElementById('search-panel');
-            const isVisible = panel.style.display !== 'none';
-            panel.style.display = isVisible ? 'none' : 'block';
-            if (!isVisible) document.getElementById('search-input').focus();
-            const btn = document.querySelector('button[onclick="toggleSearch()"]');
-            if (btn) btn.classList.toggle('active', !isVisible);
+            if (!panel) return;
+            const input = document.getElementById('search-input');
+            const isVisible = panel.style.display === 'block' || getComputedStyle(panel).display !== 'none';
+            const show = !isVisible;
+            panel.style.display = show ? 'block' : 'none';
+            if (show && input) {
+                input.focus();
+                input.dispatchEvent(new Event('input'));
+            }
+            const buttons = document.querySelectorAll('.control-panel button[onclick="toggleSearch()"]');
+            buttons.forEach(btn => btn.classList.toggle('active', show));
         }
         function toggleCalculator() {
             const panel = document.getElementById('calculator-panel');
-            const isVisible = panel.style.display !== 'none';
-            panel.style.display = isVisible ? 'none' : 'block';
-            const btn = document.querySelector('button[onclick="toggleCalculator()"]');
-            if (btn) btn.classList.toggle('active', !isVisible);
+            if (!panel) return;
+            const isVisible = panel.style.display === 'block' || getComputedStyle(panel).display !== 'none';
+            const show = !isVisible;
+            panel.style.display = show ? 'block' : 'none';
+            const buttons = document.querySelectorAll('.control-panel button[onclick="toggleCalculator()"]');
+            buttons.forEach(btn => btn.classList.toggle('active', show));
+            if (show) {
+                const current = (targetPlanet && celestialBodies[targetPlanet]) ? celestialBodies[targetPlanet].data : planetData.earth;
+                updateCalculator(current);
+            }
         }
         function playSound() { 
             soundEnabled = !soundEnabled; 
@@ -958,29 +1394,205 @@
             link.click();
             showEvent('Screenshot saved!');
             checkAchievement('photographer');
+            const btn = document.querySelector('button[onclick="takeScreenshot()"]');
+            if (btn) {
+                btn.classList.add('active');
+                setTimeout(() => btn.classList.remove('active'), 600);
+            }
         }
 
         function showComparison() {
             const view = document.getElementById('comparison-view');
             view.style.display = 'block';
+            const btn = document.querySelector('button[onclick="showComparison()"]');
+            if (btn) btn.classList.add('active');
             const content = document.getElementById('comparison-content');
-            content.innerHTML = '<table class="w-full text-sm"><tr><th class="border-b border-blue-800 p-2">Planet</th><th class="border-b border-blue-800 p-2">Diameter</th><th class="border-b border-blue-800 p-2">Gravity</th><th class="border-b border-blue-800 p-2">Escape Vel.</th><th class="border-b border-blue-800 p-2">Orbital Period</th></tr>';
-            Object.keys(planetData).forEach(key => {
-                if (key === 'sun') return;
-                const d = planetData[key];
-                content.innerHTML += `<tr class="border-t border-blue-900"><td class="p-2">${d.name}</td><td class="p-2">${d.stats.diameter}</td><td class="p-2">${d.gravity} m/s²</td><td class="p-2">${d.escapeVelocity} km/s</td><td class="p-2">${d.orbitalPeriod} days</td></tr>`;
-            });
-            content.innerHTML += '</table>';
+            const bodies = Object.keys(planetData)
+                .filter(key => key !== 'sun')
+                .map(key => planetData[key]);
+
+            const rows = bodies.map(body => {
+                const diameter = body.stats?.diameter || '-';
+                const gravity = body.gravity != null ? `${body.gravity} m/s²` : '-';
+                const escapeVel = body.escapeVelocity != null ? `${body.escapeVelocity} km/s` : '-';
+                const period = body.orbitalPeriod != null ? `${body.orbitalPeriod} days` : (body.stats?.['orbital period'] || '-');
+                return `<tr class="border-t border-blue-900 hover:bg-blue-900/20 transition-colors">
+                    <td class="p-2 font-semibold">${body.name}</td>
+                    <td class="p-2">${diameter}</td>
+                    <td class="p-2">${gravity}</td>
+                    <td class="p-2">${escapeVel}</td>
+                    <td class="p-2">${period}</td>
+                </tr>`;
+            }).join('');
+
+            content.innerHTML = `
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-blue-800 text-blue-200">
+                                <th class="p-2">Planet</th>
+                                <th class="p-2">Diameter</th>
+                                <th class="p-2">Gravity</th>
+                                <th class="p-2">Escape Vel.</th>
+                                <th class="p-2">Orbital Period</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
         }
 
         function closeComparison() {
             document.getElementById('comparison-view').style.display = 'none';
+            const btn = document.querySelector('button[onclick="showComparison()"]');
+            if (btn) btn.classList.remove('active');
         }
 
         function searchFor(query) {
             document.getElementById('search-input').value = query;
             document.getElementById('search-input').dispatchEvent(new Event('input'));
         }
+
+        const searchFilters = { planet: true, moon: true, comet: true, mission: true };
+
+        function buildPinId(sel) {
+            if (!sel) return null;
+            if (sel.type === 'planet') return `planet:${sel.key}`;
+            if (sel.type === 'moon') return `moon:${sel.parent}:${sel.index}`;
+            if (sel.type === 'comet') return `comet:${sel.key}`;
+            if (sel.type === 'mission') return `mission:${sel.key}`;
+            return null;
+        }
+
+        function isPinned(sel) {
+            const id = buildPinId(sel);
+            return !!id && pinnedItems.some(p => p.id === id);
+        }
+
+        function formatDistance(distance) {
+            if (typeof distance !== 'number' || isNaN(distance)) return '-';
+            return `${(distance * 1.5).toFixed(0)} million km`;
+        }
+
+        function getPinDisplay(item) {
+            if (item.type === 'planet') {
+                const data = planetData[item.key];
+                if (!data) return null;
+                return { name: data.name, subtitle: 'Planet', distance: formatDistance(data.distance) };
+            }
+            if (item.type === 'moon') {
+                const parent = planetData[item.parent];
+                const moonInfo = (moonData[item.parent] || [])[item.index];
+                if (!parent || !moonInfo) return null;
+                return { name: moonInfo.name, subtitle: `Moon of ${parent.name}`, distance: `${moonInfo.distance.toFixed(1)} units orbit` };
+            }
+            if (item.type === 'comet') {
+                return { name: "Halley's Comet", subtitle: 'Comet', distance: 'Elliptical orbit' };
+            }
+            if (item.type === 'mission') {
+                return { name: item.name || 'Mission', subtitle: 'Mission', distance: item.target ? `Target: ${item.target}` : '' };
+            }
+            return null;
+        }
+
+        function renderPinnedItems() {
+            const container = document.getElementById('pinned-container');
+            const cards = document.getElementById('pinned-cards');
+            if (!container || !cards) return;
+            if (pinnedItems.length === 0) {
+                container.classList.add('hidden');
+                cards.innerHTML = '';
+                updatePinButton();
+                return;
+            }
+            container.classList.remove('hidden');
+            cards.innerHTML = pinnedItems.map(item => {
+                const meta = getPinDisplay(item) || { name: 'Unknown', subtitle: '', distance: '' };
+                return `<div class="bg-gray-900/80 border border-blue-900 rounded p-2 text-xs flex items-start justify-between gap-2">
+                    <div>
+                        <p class="font-semibold">${meta.name}</p>
+                        <p class="text-gray-400">${meta.subtitle}</p>
+                        <p class="text-blue-300">${meta.distance || ''}</p>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <button class="toggle-btn text-[10px] px-2 py-1" data-action="focus" data-id="${item.id}">Focus</button>
+                        <button class="toggle-btn text-[10px] px-2 py-1" data-action="remove" data-id="${item.id}">Unpin</button>
+                    </div>
+                </div>`;
+            }).join('');
+            cards.querySelectorAll('button[data-action]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    const item = pinnedItems.find(p => p.id === id);
+                    if (!item) return;
+                    if (btn.getAttribute('data-action') === 'remove') {
+                        const idx = pinnedItems.findIndex(p => p.id === id);
+                        if (idx !== -1) pinnedItems.splice(idx, 1);
+                        renderPinnedItems();
+                        updatePinButton();
+                        return;
+                    }
+                    if (item.type === 'planet') focusPlanet(item.key);
+                    else if (item.type === 'moon') focusMoon(item.parent, item.index);
+                    else if (item.type === 'comet') focusComet();
+                });
+            });
+            updatePinButton();
+        }
+
+        function updatePinButton() {
+            const btn = document.getElementById('pin-btn');
+            if (!btn || !currentSelection) return;
+            const pinned = isPinned(currentSelection);
+            btn.textContent = pinned ? '📍 Pinned' : '📌 Pin';
+            btn.classList.toggle('active', pinned);
+        }
+
+        function togglePinCurrent() {
+            if (!currentSelection) return;
+            const id = buildPinId(currentSelection);
+            if (!id) return;
+            if (isPinned(currentSelection)) {
+                const idx = pinnedItems.findIndex(p => p.id === id);
+                if (idx !== -1) pinnedItems.splice(idx, 1);
+                renderPinnedItems();
+                return;
+            }
+            if (pinnedItems.length >= maxPinnedItems) {
+                showEvent(`You can pin up to ${maxPinnedItems} items.`);
+                return;
+            }
+            if (currentSelection.type === 'mission') return;
+            pinnedItems.push({ ...currentSelection, id });
+            renderPinnedItems();
+        }
+
+        const pinBtn = document.getElementById('pin-btn');
+        if (pinBtn) pinBtn.addEventListener('click', togglePinCurrent);
+
+        function escapeRegExp(str) {
+            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+        function highlightMatch(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${escapeRegExp(query)})`, 'ig');
+            return text.replace(regex, '<span class="text-yellow-300 font-semibold">$1</span>');
+        }
+
+        ['planet','moon','comet','mission'].forEach(type => {
+            const btn = document.getElementById(`filter-${type}`);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    searchFilters[type] = !searchFilters[type];
+                    btn.classList.toggle('active', searchFilters[type]);
+                    const input = document.getElementById('search-input');
+                    if (input) input.dispatchEvent(new Event('input'));
+                });
+            }
+        });
 
         document.getElementById('search-input').addEventListener('input', e => {
             const query = e.target.value.toLowerCase();
@@ -994,67 +1606,49 @@
             
             if (query.length < 2) return;
             
-            let foundCount = 0;
-            
-            Object.keys(planetData).forEach(key => {
-                if (planetData[key].name.toLowerCase().includes(query)) {
+            const matches = searchIndex.filter(item => 
+                item.name.toLowerCase().includes(query) || (item.key && item.key.toLowerCase().includes(query))
+            );
+
+            if (matches.length === 0) {
+                results.innerHTML = '<p class="text-gray-500 text-xs p-2">No results found. Try: Earth, Mars, Titan, Jupiter, Halley...</p>';
+                return;
+            }
+
+            const handleSelection = (item) => {
+                if (item.type === 'planet') focusPlanet(item.key);
+                else if (item.type === 'moon') focusMoon(item.parent, item.index);
+                else if (item.type === 'comet') focusComet();
+                toggleSearch();
+            };
+
+            const filtered = matches.filter(item => searchFilters[item.type]);
+
+            if (filtered.length === 0) {
+                results.innerHTML = '<p class="text-gray-500 text-xs p-2">No results with current filters. Toggle categories above.</p>';
+                return;
+            }
+
+            filtered
+                .slice(0, 30)
+                .forEach(item => {
                     const btn = document.createElement('button');
                     btn.className = 'w-full text-left p-2 hover:bg-blue-900 rounded text-sm border-l-2 border-blue-500';
-                    const icon = planetData[key].isDwarf ? '🪨' : key === 'sun' ? '⭐' : '🪐';
-                    btn.innerHTML = `${icon} <strong>${planetData[key].name}</strong> <span class="text-xs text-gray-400">- ${planetData[key].description.substring(0, 40)}...</span>`;
-                    btn.addEventListener('click', () => { focusPlanet(key); });
+                    const icon = item.type === 'planet' 
+                        ? (planetData[item.key].isDwarf ? '🪐' : item.key === 'sun' ? '☀️' : '🪐') 
+                        : item.type === 'moon' ? '🌙' : item.type === 'mission' ? '🚀' : '☄️';
+                    const description = item.description ? item.description.substring(0, 60) : 'Explore this object';
+                    const nameHtml = highlightMatch(item.name, query);
+                    const descHtml = highlightMatch(description, query);
+                    btn.innerHTML = `${icon} <strong>${nameHtml}</strong> <span class="text-xs text-gray-400">- ${descHtml}...</span>`;
+                    btn.addEventListener('click', () => handleSelection(item));
                     results.appendChild(btn);
-                    foundCount++;
-                }
-            });
-            
-            Object.keys(moonData).forEach(planetKey => {
-                moonData[planetKey].forEach((moonInfo, idx) => {
-                    if (moonInfo.name.toLowerCase().includes(query)) {
-                        const btn = document.createElement('button');
-                        btn.className = 'w-full text-left p-2 hover:bg-purple-900 rounded text-sm border-l-2 border-purple-500 pl-4';
-                        btn.innerHTML = `🌙 <strong>${moonInfo.name}</strong> <span class="text-xs text-gray-400">- Moon of ${planetData[planetKey].name}</span>`;
-                        btn.addEventListener('click', () => { focusMoon(planetKey, idx); });
-                        results.appendChild(btn);
-                        foundCount++;
-                    }
                 });
-            });
 
-            if ('halley'.includes(query)) {
-                const btn = document.createElement('button');
-                btn.className = 'w-full text-left p-2 hover:bg-cyan-900 rounded text-sm border-l-2 border-cyan-500';
-                btn.innerHTML = `☄️ <strong>Halley's Comet</strong> <span class="text-xs text-gray-400">- Famous comet with 76-year orbit</span>`;
-                btn.addEventListener('click', () => { 
-                    targetPlanet = null;
-                    cameraDistance = 400;
-                    showEvent("Following Halley's Comet");
-                });
-                results.appendChild(btn);
-                foundCount++;
-            }
-
-            spaceProbes.forEach(probe => {
-                if (probe.name.toLowerCase().includes(query)) {
-                    const btn = document.createElement('button');
-                    btn.className = 'w-full text-left p-2 hover:bg-orange-900 rounded text-sm border-l-2 border-orange-500';
-                    btn.innerHTML = `🚀 <strong>${probe.name}</strong> <span class="text-xs text-gray-400">- Space mission</span>`;
-                    btn.addEventListener('click', () => { 
-                        showEvent(`Tracking ${probe.name}`);
-                    });
-                    results.appendChild(btn);
-                    foundCount++;
-                }
-            });
-            
-            if (foundCount === 0) {
-                results.innerHTML = '<p class="text-gray-500 text-xs p-2">No results found. Try: Earth, Mars, Titan, Jupiter, Halley...</p>';
-            } else {
-                const summary = document.createElement('p');
-                summary.className = 'text-xs text-green-400 p-2 border-t border-gray-700 mt-2';
-                summary.textContent = `✓ Found ${foundCount} result${foundCount > 1 ? 's' : ''}`;
-                results.appendChild(summary);
-            }
+            const summary = document.createElement('p');
+            summary.className = 'text-xs text-green-400 p-2 border-t border-gray-700 mt-2';
+            summary.textContent = `✓ Found ${filtered.length} result${filtered.length > 1 ? 's' : ''}`;
+            results.appendChild(summary);
         });
 
         function showEvent(text) {
@@ -1167,7 +1761,7 @@
 
             Object.keys(celestialBodies).forEach(key => {
                 if (key === 'sun') { 
-                    sun.rotation.y += 0.001 * animationSpeed; 
+                    sun.rotation.y += sunRotationSpeed * animationSpeed; 
                     return; 
                 }
                 const body = celestialBodies[key];
@@ -1176,10 +1770,10 @@
                 body.mesh.position.z = Math.sin(body.angle) * body.data.distance;
                 body.mesh.rotation.y += body.data.rotationSpeed * animationSpeed;
 
-                // Rotate clouds independently on Earth
-                if (key === 'earth' && body.mesh.userData.clouds) {
-                    body.mesh.userData.clouds.rotation.y += 0.005 * animationSpeed;
-                }
+            // Rotate clouds independently on Earth
+            if (key === 'earth' && body.mesh.userData.clouds) {
+                body.mesh.userData.clouds.rotation.y += 0.005 * animationSpeed;
+            }
 
                 if (showTrails && frameCount % 3 === 0) {
                     const trail = planetTrails[key];
@@ -1202,6 +1796,14 @@
                 issAngle += 0.05 * animationSpeed;
                 const d = 8.4;
                 issGroup.position.set(Math.cos(issAngle) * d, Math.sin(issAngle * 1.3) * 1.5, Math.sin(issAngle) * d);
+            }
+
+            if (sunGlare && celestialBodies.sun) {
+                sunGlare.position.copy(celestialBodies.sun.mesh.position);
+                const dist = camera.position.distanceTo(sunGlare.position);
+                const scale = Math.max(140, Math.min(320, dist * 0.4));
+                sunGlare.scale.set(scale, scale, 1);
+                sunGlare.material.rotation += 0.0015 * animationSpeed;
             }
 
             // Halley's Comet with elliptical orbit
@@ -1238,8 +1840,8 @@
                 a.mesh.rotation.y += a.rotSpeed.y * animationSpeed;
             });
 
-            let targetPos = { x: 0, y: 0, z: 0 };
-            if (targetPlanet && celestialBodies[targetPlanet]) targetPos = celestialBodies[targetPlanet].mesh.position;
+            let targetPos = targetOverride || { x: 0, y: 0, z: 0 };
+            if (!targetOverride && targetPlanet && celestialBodies[targetPlanet]) targetPos = celestialBodies[targetPlanet].mesh.position;
 
             const camX = targetPos.x + Math.cos(cameraRotation.y) * Math.cos(cameraRotation.x) * cameraDistance;
             const camY = targetPos.y + Math.sin(cameraRotation.x) * cameraDistance;
@@ -1356,17 +1958,36 @@
                 if (advTooltips[idx]) addTooltip(btn, advTooltips[idx]);
             });
 
-            const utilButtons = document.querySelectorAll('.space-y-2.text-xs .toggle-btn');
-            const utilTooltips = [
-                'Find any planet, moon, comet or mission by name',
-                'Side-by-side comparison of all planets',
-                'Calculate your weight, escape velocity and light travel time',
-                'Capture and download current view as image',
-                'Toggle sound effects on/off'
-            ];
-            utilButtons.forEach((btn, idx) => {
-                if (utilTooltips[idx]) addTooltip(btn, utilTooltips[idx]);
-            });
+            const visualSection = Array.from(document.querySelectorAll('.control-panel .mb-4'))
+                .find(section => section.querySelector('p')?.textContent?.includes('Visual Effects'));
+            if (visualSection) {
+                const visualButtons = visualSection.querySelectorAll('.toggle-btn');
+                const visualTooltips = [
+                    'Overlay aurora effects on magnetized planets',
+                    'Render protective magnetic fields around planets that have them',
+                    'Stream particles outward from the Sun to show solar wind activity'
+                ];
+                visualButtons.forEach((btn, idx) => {
+                    if (visualTooltips[idx]) addTooltip(btn, visualTooltips[idx]);
+                });
+            }
+
+            const utilButtonsContainer = document.querySelector('.control-panel > .space-y-2.text-xs');
+            if (utilButtonsContainer) {
+                const utilButtons = utilButtonsContainer.querySelectorAll('.toggle-btn');
+                const utilTooltips = [
+                    'Find any planet, moon, comet or mission by name',
+                    'Side-by-side comparison of all planets',
+                    'Calculate your weight, escape velocity and light travel time',
+                    'Open the mission planner to estimate transfer burns',
+                    'Browse a gallery of discovered exoplanets',
+                    'Capture and download the current view as an image',
+                    'Toggle all sound effects on or off'
+                ];
+                utilButtons.forEach((btn, idx) => {
+                    if (utilTooltips[idx]) addTooltip(btn, utilTooltips[idx]);
+                });
+            }
 
             const timeButtons = document.querySelectorAll('.grid.grid-cols-3 .toggle-btn');
             const timeTooltips = ['-1 Year', '-1 Month', '-1 Day', '+1 Day', '+1 Month', '+1 Year'];
@@ -1386,6 +2007,21 @@
             panel.style.display = isVisible ? 'none' : 'block';
             const btn = document.querySelector('button[onclick="toggleMissionPlanner()"]');
             if (btn) btn.classList.toggle('active', !isVisible);
+        }
+
+        function toggleExoplanets() {
+            const panel = document.getElementById('exoplanet-panel');
+            const hasPanel = !!panel;
+            showExoplanets = hasPanel ? panel.style.display !== 'none' : showExoplanets;
+            showExoplanets = !showExoplanets;
+
+            if (hasPanel) panel.style.display = showExoplanets ? 'block' : 'none';
+            const btn = document.querySelector('button[onclick="toggleExoplanets()"]');
+            if (btn) btn.classList.toggle('active', showExoplanets);
+
+            if (showExoplanets && !hasPanel) {
+                showEvent('Exoplanet explorer coming soon.');
+            }
         }
 
         function calculateMission() {
@@ -1517,3 +2153,5 @@
     </script>
 </body>
 </html>
+
+
