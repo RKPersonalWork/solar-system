@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Space Mono', monospace; touch-action: none; }
+        canvas { position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important; z-index: 0 !important; }
         
         ::-webkit-scrollbar { width: 12px; height: 12px; }
         ::-webkit-scrollbar-track { background: linear-gradient(180deg, rgba(10, 10, 30, 0.8) 0%, rgba(20, 20, 50, 0.8) 100%); border-radius: 10px; }
@@ -15,7 +16,7 @@
         ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(59, 130, 246, 1) 0%, rgba(139, 92, 246, 1) 100%); box-shadow: 0 0 10px rgba(59, 130, 246, 0.8); }
         * { scrollbar-width: thin; scrollbar-color: rgba(59, 130, 246, 0.8) rgba(10, 10, 30, 0.8); }
         
-        #info-panel { background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(20, 20, 40, 0.9) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(100, 150, 255, 0.4); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); max-height: 90vh; overflow-y: auto; }
+        #info-panel { background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(20, 20, 40, 0.9) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(100, 150, 255, 0.4); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); max-height: 90vh; overflow-y: auto; z-index: 200; position: absolute; }
         .planet-button { transition: all 0.3s ease; border-left: 3px solid transparent; }
         .planet-button:hover { transform: scale(1.05) translateX(5px); background: rgba(59, 130, 246, 0.3); border-left-color: #60a5fa; }
         .planet-button.active { background: linear-gradient(90deg, rgba(59, 130, 246, 0.6) 0%, rgba(59, 130, 246, 0.2) 100%); border-left: 4px solid #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
@@ -23,7 +24,7 @@
         #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #0f3460 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; transition: opacity 0.5s ease; }
         .loading-spinner { width: 60px; height: 60px; border: 4px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .control-panel { background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(20, 20, 40, 0.9) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(100, 150, 255, 0.4); }
+        .control-panel { background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(20, 20, 40, 0.9) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(100, 150, 255, 0.4); z-index: 200; position: absolute; }
         .toggle-btn { padding: 8px 16px; border-radius: 6px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); transition: all 0.3s ease; cursor: pointer; }
         .toggle-btn:hover { background: rgba(59, 130, 246, 0.4); transform: scale(1.05); }
         .toggle-btn.active { background: rgba(59, 130, 246, 0.7); border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
@@ -31,10 +32,45 @@
         .event-notification { position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, rgba(139, 92, 246, 0.95), rgba(59, 130, 246, 0.95)); padding: 20px 40px; border-radius: 10px; box-shadow: 0 0 40px rgba(139, 92, 246, 0.8); z-index: 100; display: none; animation: slideIn 0.5s ease; }
         @keyframes slideIn { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
         .search-panel { background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(20, 20, 40, 0.95) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(100, 150, 255, 0.4); }
-        .comparison-view { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(20px); border: 2px solid rgba(100, 150, 255, 0.6); border-radius: 10px; padding: 20px; z-index: 200; display: none; max-width: 80vw; max-height: 80vh; overflow-y: auto; }
+        .comparison-view { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(20px); border: 2px solid rgba(100, 150, 255, 0.6); border-radius: 10px; padding: 20px; z-index: 400; display: none; max-width: 80vw; max-height: 80vh; overflow-y: auto; }
         .achievement-popup { position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.9), rgba(255, 165, 0, 0.9)); color: #000; padding: 15px 25px; border-radius: 8px; box-shadow: 0 0 30px rgba(255, 215, 0, 0.8); z-index: 150; display: none; animation: bounceIn 0.6s ease; }
         @keyframes bounceIn { 0% { transform: scale(0); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         @media (max-width: 768px) { #info-panel { max-width: 90vw; font-size: 0.875rem; } .control-panel { font-size: 0.75rem; } }
+        @media (max-width: 640px) {
+            #info-panel { left: 50%; transform: translateX(-50%); width: 92vw; max-width: 92vw; font-size: 0.85rem; padding: 14px; }
+            .toggle-btn { padding: 6px 10px; font-size: 0.75rem; }
+            .planet-button { padding: 6px 10px; font-size: 0.75rem; }
+            #planet-buttons .planet-button { font-size: 0.8rem; }
+            .search-panel, .comparison-view, .calculator-panel { width: 92vw; max-width: 92vw; }
+            #mission-panel { right: 12px; left: 12px; width: auto; max-width: none; bottom: 80px; }
+            .achievements-card { width: 94vw; max-width: 94vw; }
+            .achievements-body { max-height: 60vh; }
+            #controls-overlay, #stats-overlay { width: 92vw; left: 50%; transform: translateX(-50%); font-size: 0.7rem; }
+            #control-panel { max-width: 92vw; right: 4%; left: auto; }
+            #info-panel, #control-panel { display: none; }
+            .mobile-panel-toggles { display: flex; }
+            .panel-close { display: grid; }
+        }
+
+        @media (min-width: 641px) {
+            #info-panel { display: block; position: absolute; left: 16px; right: auto; top: 16px; width: 22rem; transform: none; }
+            #control-panel { display: block; position: absolute; right: 16px; left: auto; top: 16px; width: 18rem; }
+            .mobile-panel-toggles { display: none; }
+            .panel-close { display: none; }
+        }
+
+        .mobile-panel-toggles { 
+            position: fixed; 
+            top: 10px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 250; 
+            flex-direction: row; 
+            gap: 10px; 
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+        .mobile-panel-toggles .toggle-btn { font-size: 0.8rem; padding: 8px 12px; color: #fff; text-align: center; white-space: nowrap; }
         .eclipse-shadow { position: absolute; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, rgba(0,0,0,0.8), transparent); pointer-events: none; }
         
         .tooltip { position: absolute; background: rgba(0, 0, 0, 0.9); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; pointer-events: none; z-index: 10000; white-space: nowrap; opacity: 0; transition: opacity 0.2s ease; box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); border: 1px solid rgba(59, 130, 246, 0.5); max-width: 250px; white-space: normal; }
@@ -69,6 +105,17 @@
         .timeline-event:hover { transform: scale(1.02); border-color: rgba(255, 200, 100, 0.8); box-shadow: 0 0 15px rgba(255, 200, 100, 0.5); }
         .timeline-marker { position: absolute; width: 20px; height: 20px; background: radial-gradient(circle, rgba(255, 200, 100, 1), rgba(255, 150, 50, 0.5)); border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.8); z-index: 5; pointer-events: none; animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.7; } }
+        
+        /* Achievements Modal */
+        .achievements-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); display: none; align-items: center; justify-content: center; z-index: 220; }
+        .achievements-card { background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95)); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 12px; width: 90vw; max-width: 720px; max-height: 80vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+        .achievements-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid rgba(59, 130, 246, 0.3); }
+        .achievements-body { padding: 16px 20px; max-height: 70vh; overflow-y: auto; }
+        .achievement-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.08); margin-bottom: 8px; }
+        .achievement-item.locked { opacity: 0.5; border-style: dashed; }
+        .achievement-badge { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: rgba(59, 130, 246, 0.2); }
+        .panel-close { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; width: 28px; height: 28px; display: none; place-items: center; cursor: pointer; font-size: 16px; }
+        .panel-close:hover { background: rgba(255,255,255,0.15); }
     </style>
 </head>
 <body class="bg-black">
@@ -90,6 +137,30 @@
     <div id="achievement-popup" class="achievement-popup">
         <h3 class="font-bold text-lg mb-1">🏆 Achievement Unlocked!</h3>
         <p id="achievement-text"></p>
+    </div>
+
+    <div id="achievements-modal" class="achievements-modal">
+        <div class="achievements-card">
+            <div class="achievements-header">
+                <div>
+                    <p class="text-xs text-blue-200 uppercase tracking-wide">Achievement Tracker</p>
+                    <h3 class="text-xl font-bold text-white title">🚀 Milestones & Goals</h3>
+                </div>
+                <button id="close-achievements" class="text-white text-2xl hover:text-red-400">&times;</button>
+            </div>
+            <div class="achievements-body text-white text-sm">
+                <div class="mb-3">
+                    <div class="flex items-center justify-between">
+                        <p class="font-semibold">Progress: <span id="achievement-progress-text"></span></p>
+                        <p id="achievement-progress-percent" class="text-blue-300 text-xs"></p>
+                    </div>
+                    <div class="w-full bg-gray-800 rounded-full h-2 mt-1 overflow-hidden">
+                        <div id="achievement-progress-bar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div id="achievement-list" class="space-y-2"></div>
+            </div>
+        </div>
     </div>
 
     <div id="search-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform text-white search-panel p-4 rounded-lg w-80 max-w-md z-40 shadow-2xl" style="display:none;">
@@ -201,7 +272,8 @@
         </div>
     </div>
 
-    <div id="info-panel" class="absolute top-4 left-4 text-white p-6 rounded-lg max-w-sm z-10">
+    <div id="info-panel" class="absolute top-4 left-4 text-white p-6 rounded-lg max-w-sm z-10" style="z-index: 200; pointer-events: auto;">
+        <button id="close-info-panel" class="panel-close" aria-label="Close info panel">&times;</button>
         <h1 class="text-2xl font-bold mb-2 title">🌌 Solar System Ultimate</h1>
         <p class="text-sm text-gray-300 mb-4">🚀 Click | 🎮 Drag | 🔍 Scroll | ⏱️ Time Travel</p>
         
@@ -250,7 +322,8 @@
         </div>
 
         <div class="mt-4 p-3 bg-gray-900 bg-opacity-50 rounded text-xs">
-            <p class="font-semibold mb-1">🏆 Achievements: <span id="achievement-count">0/10</span></p>
+            <p class="font-semibold mb-1">🏆 Achievements: <span id="achievement-count">0/16</span></p>
+            <button id="open-achievements" class="toggle-btn text-xs px-3 py-1 mb-2">📜 View all</button>
             <p class="font-semibold mb-1">Quick Stats:</p>
             <p>📊 Total Objects: <span id="total-objects">-</span></p>
             <p>🌍 Planets: 8 | 🌙 Moons: 146+</p>
@@ -260,7 +333,8 @@
         </div>
     </div>
 
-    <div class="absolute top-4 right-4 text-white control-panel p-4 rounded-lg z-10 max-w-xs max-h-screen overflow-y-auto" style="max-height: 95vh;">
+    <div id="control-panel" class="absolute top-4 right-4 text-white control-panel p-4 rounded-lg z-10 max-w-xs max-h-screen overflow-y-auto" style="max-height: 95vh; z-index: 200; pointer-events: auto;">
+        <button id="close-control-panel" class="panel-close" aria-label="Close control panel">&times;</button>
         <div class="mb-4">
             <label class="text-sm font-semibold block mb-2">⚡ Speed: <span id="speed-display">1.0x</span></label>
             <input type="range" id="speed-slider" min="-50" max="100" step="1" value="1" class="w-full">
@@ -337,16 +411,21 @@
         </div>
     </div>
 
-    <div class="absolute bottom-4 left-4 text-white text-xs bg-black bg-opacity-80 p-4 rounded-lg backdrop-blur-sm">
+    <div id="controls-overlay" class="absolute bottom-4 left-4 text-white text-xs bg-black bg-opacity-80 p-4 rounded-lg backdrop-blur-sm" style="z-index: 150;">
         <p class="font-semibold mb-1">🎮 Controls:</p>
         <p>🖱️ Left Drag: Rotate | ⚙️ Scroll: Zoom</p>
         <p>📱 Touch: Pan & Pinch | 🖱️ Click: Select</p>
     </div>
 
-    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-xs bg-black bg-opacity-80 p-4 rounded-lg backdrop-blur-sm text-center">
+    <div id="stats-overlay" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-xs bg-black bg-opacity-80 p-4 rounded-lg backdrop-blur-sm text-center" style="z-index: 150;">
         <p id="distance-indicator" class="text-blue-300">Distance: -</p>
         <p id="speed-indicator" class="text-green-300">Orbital Speed: -</p>
         <p id="conjunction-indicator" class="text-purple-300">Next Conjunction: Calculating...</p>
+    </div>
+
+    <div class="mobile-panel-toggles">
+        <button id="toggle-info-panel" class="toggle-btn">📑 Show info</button>
+        <button id="toggle-control-panel" class="toggle-btn">🎛️ Show controls</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -381,6 +460,23 @@
         const textureLoader = new THREE.TextureLoader();
         const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
+        function createStarTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            grad.addColorStop(0.0, 'rgba(255,255,255,1)');
+            grad.addColorStop(0.4, 'rgba(255,255,255,0.6)');
+            grad.addColorStop(1.0, 'rgba(255,255,255,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 64, 64);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.NearestFilter;
+            texture.magFilter = THREE.NearestFilter;
+            texture.generateMipmaps = false;
+            return texture;
+        }
+
         let showOrbits = true, showTrails = true, showLabels = true, showMoons = true, showAsteroids = true;
         let showDwarfPlanets = true, showHabitableZone = false, showLagrangePoints = false;
         let useRealisticTextures = true;
@@ -388,6 +484,25 @@
         let targetOverride = null; // allows focusing non-planet targets like comets
         let simulationDate = new Date(2024, 0, 1, 0, 0, 0);
         let startDate = new Date(2024, 0, 1, 0, 0, 0);
+        const achievementList = [
+            { id: 'first_click', name: 'First Contact', desc: 'Click any celestial body.' },
+            { id: 'explorer', name: 'Planet Explorer', desc: 'Visit a planet.' },
+            { id: 'moon_hunter', name: 'Moon Hunter', desc: 'Visit any moon.' },
+            { id: 'comet_chaser', name: 'Comet Chaser', desc: 'Focus on Halley\'s Comet.' },
+            { id: 'mission_planner', name: 'Mission Architect', desc: 'Run a mission calculation.' },
+            { id: 'tour_guide', name: 'Tour Guide', desc: 'Start the automated grand tour.' },
+            { id: 'time_traveler', name: 'Time Traveler', desc: 'Jump time forward or backward.' },
+            { id: 'photographer', name: 'Cosmic Photographer', desc: 'Take a screenshot.' },
+            { id: 'speed_demon', name: 'Speed Demon', desc: 'Push simulation speed to 50x.' },
+            { id: 'astronomer', name: 'Astronomer', desc: 'Visit all 8 planets.' },
+            { id: 'sound_on', name: 'Sound Check', desc: 'Enable sound effects.' },
+            { id: 'pinner', name: 'Pinned It', desc: 'Pin any object.' },
+            { id: 'dwarf_seeker', name: 'Dwarf Seeker', desc: 'Toggle dwarf planets on.' },
+            { id: 'trailblazer', name: 'Trailblazer', desc: 'Enable orbit trails.' },
+            { id: 'master', name: 'Solar System Master', desc: 'Explore for 10+ minutes.' },
+            { id: 'completionist', name: 'Completionist', desc: 'Unlock every achievement.' }
+        ];
+        const achievementMeta = Object.fromEntries(achievementList.map(a => [a.id, a]));
         let achievements = new Set();
         let audioContext = null;
         let visitedPlanets = new Set();
@@ -415,7 +530,21 @@
         }
         starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
         starGeometry.setAttribute('color', new THREE.Float32BufferAttribute(starColors, 3));
-        scene.add(new THREE.Points(starGeometry, new THREE.PointsMaterial({ size: 3, vertexColors: true, transparent: true, opacity: 0.9 })));
+        const starTexture = createStarTexture();
+        scene.add(new THREE.Points(
+            starGeometry, 
+            new THREE.PointsMaterial({ 
+                size: 4, 
+                vertexColors: true, 
+                transparent: true, 
+                opacity: 1, 
+                map: starTexture,
+                alphaTest: 0.05,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending,
+                sizeAttenuation: false
+            })
+        ));
 
         const planetData = {
             sun: { name: 'The Sun', radius: 20, color: 0xfdb813, distance: 0, speed: 0, tilt: 0, rotationSpeed: 0.001,
@@ -786,7 +915,14 @@
             const angle = Math.random() * Math.PI * 2, distance = 115 + Math.random() * 20;
             asteroid.position.set(Math.cos(angle) * distance, (Math.random() - 0.5) * 12, Math.sin(angle) * distance);
             asteroidBelt.add(asteroid);
-            asteroids.push({ mesh: asteroid, angle, distance, speed: 0.003 + Math.random() * 0.002, rotSpeed: { x: (Math.random() - 0.5) * 0.02, y: (Math.random() - 0.5) * 0.02 }, baseColor });
+            asteroids.push({ 
+                mesh: asteroid, 
+                angle, 
+                distance, 
+                speed: 0.0006 + Math.random() * 0.0004, 
+                rotSpeed: { x: (Math.random() - 0.5) * 0.004, y: (Math.random() - 0.5) * 0.004 }, 
+                baseColor 
+            });
         }
 
         // Halley's Comet with 76-year elliptical orbit
@@ -1158,6 +1294,7 @@
             updatePinButton();
             
             showEvent('Focusing on Halley\'s Comet');
+            checkAchievement('comet_chaser');
         }
 
         function updateCalculator(planetData) {
@@ -1222,7 +1359,12 @@
         }
 
         function toggleOrbits() { showOrbits = !showOrbits; Object.values(orbits).forEach(o => o.visible = showOrbits); document.getElementById('toggle-orbits').classList.toggle('active', showOrbits); }
-        function toggleTrails() { showTrails = !showTrails; Object.values(planetTrails).forEach(t => t.line.visible = showTrails); document.getElementById('toggle-trails').classList.toggle('active', showTrails); }
+        function toggleTrails() { 
+            showTrails = !showTrails; 
+            Object.values(planetTrails).forEach(t => t.line.visible = showTrails); 
+            document.getElementById('toggle-trails').classList.toggle('active', showTrails); 
+            if (showTrails) checkAchievement('trailblazer');
+        }
         function toggleLabels() { showLabels = !showLabels; Object.values(labels).forEach(l => l.visible = showLabels); document.getElementById('toggle-labels').classList.toggle('active', showLabels); }
         function toggleMoons() { 
             showMoons = !showMoons; 
@@ -1240,6 +1382,7 @@
                 }
             }); 
             document.getElementById('toggle-dwarf').classList.toggle('active', showDwarfPlanets); 
+            if (showDwarfPlanets) checkAchievement('dwarf_seeker');
         }
         function toggleHabitableZone() { 
             showHabitableZone = !showHabitableZone; 
@@ -1385,6 +1528,7 @@
             document.getElementById('sound-btn').textContent = soundEnabled ? '🔊 Sound ON' : '🔇 Sound OFF'; 
             document.getElementById('sound-btn').classList.toggle('active', soundEnabled);
             if (soundEnabled && !audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            if (soundEnabled) checkAchievement('sound_on');
         }
         function takeScreenshot() { 
             renderer.render(scene, camera); 
@@ -1568,10 +1712,66 @@
             if (currentSelection.type === 'mission') return;
             pinnedItems.push({ ...currentSelection, id });
             renderPinnedItems();
+            checkAchievement('pinner');
         }
 
         const pinBtn = document.getElementById('pin-btn');
         if (pinBtn) pinBtn.addEventListener('click', togglePinCurrent);
+
+        renderAchievementsModal();
+        const openAchievementsBtn = document.getElementById('open-achievements');
+        if (openAchievementsBtn) openAchievementsBtn.addEventListener('click', () => toggleAchievementsModal());
+        const closeAchievementsBtn = document.getElementById('close-achievements');
+        if (closeAchievementsBtn) closeAchievementsBtn.addEventListener('click', () => toggleAchievementsModal(false));
+        const achievementsModal = document.getElementById('achievements-modal');
+        if (achievementsModal) achievementsModal.addEventListener('click', (e) => {
+            if (e.target === achievementsModal) toggleAchievementsModal(false);
+        });
+
+        const isMobile = () => window.innerWidth <= 640;
+
+        function togglePanelVisibility(panelId, buttonId, labelShow, labelHide, forceShow = null) {
+            const panel = document.getElementById(panelId);
+            const btn = document.getElementById(buttonId);
+            if (!panel || !btn) return;
+            const isHidden = getComputedStyle(panel).display === 'none';
+            let shouldShow = typeof forceShow === 'boolean' ? forceShow : isHidden;
+
+            // On mobile, only one panel open at a time
+            if (shouldShow && isMobile()) {
+                const otherPanelId = panelId === 'info-panel' ? 'control-panel' : 'info-panel';
+                const otherBtnId = panelId === 'info-panel' ? 'toggle-control-panel' : 'toggle-info-panel';
+                togglePanelVisibility(otherPanelId, otherBtnId, otherBtnId.includes('info') ? '📑 Show info' : '🎛️ Show controls', otherBtnId.includes('info') ? '📑 Hide info' : '🎛️ Hide controls', false);
+            }
+
+            panel.style.display = shouldShow ? 'block' : 'none';
+            btn.textContent = shouldShow ? labelHide : labelShow;
+        }
+
+        const infoPanelToggle = document.getElementById('toggle-info-panel');
+        if (infoPanelToggle) infoPanelToggle.addEventListener('click', () => togglePanelVisibility('info-panel', 'toggle-info-panel', '📑 Show info', '📑 Hide info'));
+        const controlPanelToggle = document.getElementById('toggle-control-panel');
+        if (controlPanelToggle) controlPanelToggle.addEventListener('click', () => togglePanelVisibility('control-panel', 'toggle-control-panel', '🎛️ Show controls', '🎛️ Hide controls'));
+
+        const infoPanelClose = document.getElementById('close-info-panel');
+        if (infoPanelClose) infoPanelClose.addEventListener('click', () => togglePanelVisibility('info-panel', 'toggle-info-panel', '📑 Show info', '📑 Hide info', false));
+        const controlPanelClose = document.getElementById('close-control-panel');
+        if (controlPanelClose) controlPanelClose.addEventListener('click', () => togglePanelVisibility('control-panel', 'toggle-control-panel', '🎛️ Show controls', '🎛️ Hide controls', false));
+
+        function syncPanelsForViewport() {
+            if (isMobile()) {
+                togglePanelVisibility('info-panel', 'toggle-info-panel', '📑 Show info', '📑 Hide info', false);
+                togglePanelVisibility('control-panel', 'toggle-control-panel', '🎛️ Show controls', '🎛️ Hide controls', false);
+            } else {
+                togglePanelVisibility('info-panel', 'toggle-info-panel', '📑 Show info', '📑 Hide info', true);
+                togglePanelVisibility('control-panel', 'toggle-control-panel', '🎛️ Show controls', '🎛️ Hide controls', true);
+            }
+        }
+
+        syncPanelsForViewport();
+        window.addEventListener('resize', () => {
+            syncPanelsForViewport();
+        });
 
         function escapeRegExp(str) {
             return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -1658,30 +1858,61 @@
             setTimeout(() => notif.style.display = 'none', 3000);
         }
 
+        function renderAchievementsModal() {
+            const listEl = document.getElementById('achievement-list');
+            const progressText = document.getElementById('achievement-progress-text');
+            const progressPercent = document.getElementById('achievement-progress-percent');
+            const progressBar = document.getElementById('achievement-progress-bar');
+            const countEl = document.getElementById('achievement-count');
+            const total = achievementList.length;
+            const unlocked = achievements.size;
+            const percent = Math.round((unlocked / total) * 100);
+
+            if (countEl) countEl.textContent = `${unlocked}/${total}`;
+            if (progressText) progressText.textContent = `${unlocked} of ${total} unlocked`;
+            if (progressPercent) progressPercent.textContent = `${percent}%`;
+            if (progressBar) progressBar.style.width = `${percent}%`;
+
+            if (!listEl) return;
+            listEl.innerHTML = achievementList.map(a => {
+                const hasIt = achievements.has(a.id);
+                const icon = hasIt ? '✅' : '🔒';
+                return `<div class="achievement-item${hasIt ? '' : ' locked'}">
+                    <div class="achievement-badge">${icon}</div>
+                    <div>
+                        <p class="font-semibold">${a.name}</p>
+                        <p class="text-gray-300">${a.desc}</p>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function toggleAchievementsModal(show) {
+            const modal = document.getElementById('achievements-modal');
+            if (!modal) return;
+            const shouldShow = typeof show === 'boolean'
+                ? show
+                : (getComputedStyle(modal).display === 'none');
+            modal.style.display = shouldShow ? 'flex' : 'none';
+            const btn = document.getElementById('open-achievements');
+            if (btn) btn.classList.toggle('active', shouldShow);
+        }
+
         function checkAchievement(type) {
-            if (achievements.has(type)) return;
+            if (!achievementMeta[type] || achievements.has(type)) return;
             achievements.add(type);
-            const achievementNames = {
-                first_click: 'First Contact - Clicked on a celestial body',
-                explorer: 'Explorer - Visited a planet',
-                moon_hunter: 'Moon Hunter - Visited a moon',
-                tour_guide: 'Tour Guide - Started the grand tour',
-                time_traveler: 'Time Traveler - Jumped through time',
-                photographer: 'Photographer - Took a screenshot',
-                speed_demon: 'Speed Demon - Reached 50x speed',
-                astronomer: 'Astronomer - Visited all 8 planets',
-                completionist: 'Completionist - Unlocked all features',
-                master: 'Solar System Master - Spent 10 minutes exploring'
-            };
-            if (achievementNames[type]) {
-                document.getElementById('achievement-text').textContent = achievementNames[type];
-                document.getElementById('achievement-popup').style.display = 'block';
-                setTimeout(() => document.getElementById('achievement-popup').style.display = 'none', 4000);
-                document.getElementById('achievement-count').textContent = `${achievements.size}/10`;
-                
-                if (achievements.size >= 10) {
-                    setTimeout(() => checkAchievement('completionist'), 500);
-                }
+            const meta = achievementMeta[type];
+            const popup = document.getElementById('achievement-popup');
+            if (popup) {
+                document.getElementById('achievement-text').textContent = `${meta.name} - ${meta.desc}`;
+                popup.style.display = 'block';
+                setTimeout(() => popup.style.display = 'none', 4000);
+            }
+
+            renderAchievementsModal();
+
+            if (type !== 'completionist' && !achievements.has('completionist') && achievements.size >= achievementList.length - 1) {
+                setTimeout(() => checkAchievement('completionist'), 200);
             }
         }
 
@@ -1995,7 +2226,7 @@
                 if (timeTooltips[idx]) addTooltip(btn, `Jump time ${timeTooltips[idx]}`);
             });
 
-            addTooltip(document.getElementById('speed-slider'), 'Control simulation speed from -50x (reverse) to +100x (fast forward)');
+            
         }, 2500);
 
         // Mission Planning Functions
@@ -2153,5 +2384,3 @@
     </script>
 </body>
 </html>
-
-
